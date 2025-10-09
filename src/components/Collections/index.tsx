@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "./index.css";
+import HeaderTable from "../RequestForm/Headers/HeaderTable";
+import BodyInput from "../RequestForm/BodyInput";
 
 export interface Collection {
   id: string;
@@ -27,6 +29,8 @@ interface Props {
   }) => void;
 }
 
+declare const chrome: any;
+
 const Collections = ({
   collections,
   setCollections,
@@ -36,12 +40,62 @@ const Collections = ({
 }: Props) => {
   const [newCollectionName, setNewCollectionName] = useState("");
   const [adding, setAdding] = useState(false);
+  const [creatingFor, setCreatingFor] = useState<string | null>(null);
+
+  // Local states for inline request form
+  const [method, setMethod] = useState("GET");
+  const [url, setUrl] = useState("");
+  const [headers, setHeaders] = useState([
+    { key: "Content-Type", value: "application/json", enabled: true },
+  ]);
+  const [body, setBody] = useState("");
 
   const handleAdd = () => {
     if (!newCollectionName.trim()) return;
     addCollection(newCollectionName.trim());
     setNewCollectionName("");
     setAdding(false);
+  };
+
+  const saveRequestToCollection = (collectionId: string) => {
+    if (!url.trim()) return alert("Enter request URL");
+
+    setCollections((prev) => {
+      const updated = prev.map((c) =>
+        c.id === collectionId
+          ? {
+              ...c,
+              requests: [
+                ...c.requests,
+                {
+                  method,
+                  url,
+                  headers,
+                  body,
+                },
+              ],
+            }
+          : c
+      );
+
+      const isExtension = window.location.protocol === "chrome-extension:";
+      if (isExtension && chrome?.storage?.local) {
+        chrome.storage.local.set({ collections: updated });
+      } else {
+        localStorage.setItem("collections", JSON.stringify(updated));
+      }
+
+      return updated;
+    });
+
+    // Reset form state
+    setCreatingFor(null);
+    setMethod("GET");
+    setUrl("");
+    setHeaders([
+      { key: "Content-Type", value: "application/json", enabled: true },
+    ]);
+    setBody("");
   };
 
   const deleteRequest = (collectionId: string, index: number) => {
@@ -51,16 +105,29 @@ const Collections = ({
           ? { ...c, requests: c.requests.filter((_, i) => i !== index) }
           : c
       );
-      localStorage.setItem("collections", JSON.stringify(updated));
+
+      const isExtension = window.location.protocol === "chrome-extension:";
+      if (isExtension && chrome?.storage?.local) {
+        chrome.storage.local.set({ collections: updated });
+      } else {
+        localStorage.setItem("collections", JSON.stringify(updated));
+      }
+
       return updated;
     });
   };
 
-  // ✅ Instant delete — no confirm dialog
   const deleteCollection = (id: string) => {
     setCollections((prev) => {
       const updated = prev.filter((c) => c.id !== id);
-      localStorage.setItem("collections", JSON.stringify(updated));
+
+      const isExtension = window.location.protocol === "chrome-extension:";
+      if (isExtension && chrome?.storage?.local) {
+        chrome.storage.local.set({ collections: updated });
+      } else {
+        localStorage.setItem("collections", JSON.stringify(updated));
+      }
+
       return updated;
     });
   };
@@ -125,9 +192,19 @@ const Collections = ({
 
               {!col.collapsed && (
                 <div className="collection-body">
-                  {col.requests.length === 0 ? (
-                    <p className="empty">No APIs yet.</p>
-                  ) : (
+                  {col.requests.length === 0 && (
+                    <div className="empty">
+                      <p>No APIs yet.</p>
+                      <button
+                        className="add-request-btn"
+                        onClick={() => setCreatingFor(col.id)}
+                      >
+                        + Create Request
+                      </button>
+                    </div>
+                  )}
+
+                  {col.requests.length > 0 && (
                     <ul className="request-list">
                       {col.requests.map((r, i) => (
                         <li key={i} className="request-item">
@@ -151,7 +228,84 @@ const Collections = ({
                           </button>
                         </li>
                       ))}
+                      <button
+                        className="add-request-btn"
+                        onClick={() => setCreatingFor(col.id)}
+                      >
+                        + Create Request
+                      </button>
                     </ul>
+                  )}
+
+                  {/* Inline Create Request Form BELOW "No APIs yet." */}
+                  {creatingFor === col.id && (
+                    <div
+                      style={{
+                        marginBottom: 10,
+                      }}
+                    >
+                      <h3
+                        style={{
+                          marginLeft: 10,
+                          fontFamily: "monospace",
+                          fontSize: 18,
+                        }}
+                      >
+                        New Request
+                      </h3>
+                      <div className="create-request-form">
+                        <div className="row2">
+                          <select
+                            value={method}
+                            onChange={(e) => setMethod(e.target.value)}
+                          >
+                            {["GET", "POST", "PUT", "PATCH", "DELETE"].map(
+                              (m) => (
+                                <option key={m}>{m}</option>
+                              )
+                            )}
+                          </select>
+
+                          <input
+                            placeholder="Enter request URL"
+                            value={url}
+                            onChange={(e) => setUrl(e.target.value)}
+                          />
+                        </div>
+
+                        <HeaderTable
+                          headers={headers}
+                          setHeaders={setHeaders}
+                        />
+                        <BodyInput
+                          method={method}
+                          body={body}
+                          setBody={setBody}
+                        />
+                      </div>
+                      <div
+                        style={{
+                          gap: 10,
+                          display: "flex",
+                          justifyContent: "flex-end",
+                          marginTop: 10,
+                          marginRight: 10,
+                        }}
+                      >
+                        <button
+                          className="add-btn"
+                          onClick={() => saveRequestToCollection(col.id)}
+                        >
+                          Save
+                        </button>
+                        <button
+                          className="add-btn"
+                          onClick={() => setCreatingFor(null)}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               )}

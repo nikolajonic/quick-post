@@ -4,6 +4,9 @@ import Collections, { type Collection } from "./components/Collections";
 import History, { type HistoryItem } from "./components/History";
 import "./App.css";
 import "./styles/base.css";
+import { isExtension } from "./helpers";
+
+declare const chrome: any;
 
 const App = () => {
   const [activeTab, setActiveTab] = useState<"request" | "collections">(
@@ -15,28 +18,60 @@ const App = () => {
   const [selectedHistoryItem, setSelectedHistoryItem] =
     useState<HistoryItem | null>(null);
 
-  // Load history
   useEffect(() => {
-    const saved = localStorage.getItem("requestHistory");
-    if (saved) setHistory(JSON.parse(saved));
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.get(
+        "requestHistory",
+        (result: { requestHistory?: HistoryItem[] }) => {
+          if (result.requestHistory) setHistory(result.requestHistory);
+        }
+      );
+    } else {
+      const saved = localStorage.getItem("requestHistory");
+      if (saved) setHistory(JSON.parse(saved));
+    }
   }, []);
 
   // Load collections
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem("collections");
-      if (saved) setCollections(JSON.parse(saved));
-    } catch {}
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.get(
+        "collections",
+        (result: { collections?: Collection[] }) => {
+          if (result.collections) setCollections(result.collections);
+        }
+      );
+    } else {
+      try {
+        const saved = localStorage.getItem("collections");
+        if (saved) setCollections(JSON.parse(saved));
+      } catch {}
+    }
   }, []);
 
   // Sync collections
+  // ✅ Auto-sync collections to storage
   useEffect(() => {
-    localStorage.setItem("collections", JSON.stringify(collections));
+    const isExtension = window.location.protocol === "chrome-extension:";
+
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.set({ collections });
+    } else {
+      localStorage.setItem("collections", JSON.stringify(collections));
+    }
   }, [collections]);
 
+  // ✅ Save and sync history
   const updateHistory = (newHistory: HistoryItem[]) => {
     setHistory(newHistory);
-    localStorage.setItem("requestHistory", JSON.stringify(newHistory));
+
+    const isExtension = window.location.protocol === "chrome-extension:";
+
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.set({ requestHistory: newHistory });
+    } else {
+      localStorage.setItem("requestHistory", JSON.stringify(newHistory));
+    }
   };
 
   // CRUD for collections

@@ -15,6 +15,8 @@ interface RequestFormProps {
   clearPrefill?: () => void;
 }
 
+declare const chrome: any;
+
 const RequestForm = ({
   history,
   setHistory,
@@ -29,9 +31,13 @@ const RequestForm = ({
     { key: "Content-Type", value: "application/json", enabled: true },
   ]);
   const [body, setBody] = useState("");
-  const [response, setResponse] = useState<{ raw: string; parsed: any } | null>(
-    null
-  );
+  const [response, setResponse] = useState<{
+    raw: string;
+    parsed: any;
+    statusCode?: number;
+    statusText?: string;
+    timeMs?: number;
+  } | null>(null);
   const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
@@ -54,6 +60,7 @@ const RequestForm = ({
     body: string
   ) => {
     if (!url) return;
+
     const newItem = {
       method,
       url,
@@ -62,13 +69,23 @@ const RequestForm = ({
       status,
       timestamp: new Date().toISOString(),
     };
+
     const updated = [newItem, ...history].slice(0, 20);
     setHistory(updated);
-    localStorage.setItem("requestHistory", JSON.stringify(updated));
+
+    const isExtension = window.location.protocol === "chrome-extension:";
+
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.set({ requestHistory: updated });
+    } else {
+      localStorage.setItem("requestHistory", JSON.stringify(updated));
+    }
   };
 
   const handleSend = async () => {
     if (!url) return alert("Enter URL");
+
+    const start = performance.now();
 
     const options: RequestInit = {
       method,
@@ -82,6 +99,7 @@ const RequestForm = ({
 
     try {
       const res = await fetch(url, options);
+      const end = performance.now();
       const text = await res.text();
 
       let parsed: any;
@@ -91,12 +109,23 @@ const RequestForm = ({
         parsed = text;
       }
 
-      setResponse({ raw: text, parsed });
+      setResponse({
+        raw: text,
+        parsed,
+        statusCode: res.status,
+        statusText: res.statusText,
+        timeMs: end - start,
+      });
+
       setStatus(res.ok ? "success" : "error");
       saveHistory(method, url, res.ok ? "success" : "error", headers, body);
       setShowAddToCollection(true);
     } catch (err: any) {
-      setResponse({ raw: err.message, parsed: { error: err.message } });
+      setResponse({
+        raw: err.message,
+        parsed: { error: err.message },
+        timeMs: 0,
+      });
       setStatus("error");
     }
   };
@@ -120,7 +149,13 @@ const RequestForm = ({
           : c
       );
 
-      localStorage.setItem("collections", JSON.stringify(updated));
+      const isExtension = window.location.protocol === "chrome-extension:";
+
+      if (isExtension && chrome?.storage?.local) {
+        chrome.storage.local.set({ collections: updated });
+      } else {
+        localStorage.setItem("collections", JSON.stringify(updated));
+      }
 
       const col = updated.find((c) => c.id === collectionId);
       setShowTooltip(`Saved to "${col?.name}"`);

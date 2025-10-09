@@ -46,3 +46,28 @@
 .body-textarea:focus {
   background: #fff9f3;
 }
+
+/* new wrapper to hold button inside textarea area */
+.body-textarea-wrapper {
+  position: relative;
+}
+
+/* "Format" button positioned inside textarea top-right */
+.format-btn {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  background: var(--secondary);
+  color: var(--button-text);
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  padding: 4px 10px;
+  cursor: pointer;
+  z-index: 2;
+}
+
+.format-btn:hover {
+  background: #1b1b1b;
+  color: var(--secondary);
+}
