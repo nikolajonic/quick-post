@@ -1,0 +1,45 @@
+.header-table {
+  margin-top: 16px;
+}
+
+.header-table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.header-table table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.header-table th,
+.header-table td {
+  padding: 6px;
+  border-bottom: 1px solid #ddd;
+  font-size: 13px;
+}
+
+.header-table input[type="text"],
+.header-table input[type="checkbox"] {
+  width: 100%;
+}
+
+.header-table input[type="text"] {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 5px;
+}
+
+.remove-btn {
+  background: transparent;
+  border: none;
+  color: #999;
+  font-size: 18px;
+  cursor: pointer;
+}
+
+.remove-btn:hover {
+  color: #e74c3c;
+}

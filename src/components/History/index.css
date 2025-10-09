@@ -1,0 +1,140 @@
+.history-view {
+  background: white;
+  border-radius: 10px;
+  padding: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+}
+
+.history-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--primary);
+  color: white;
+  padding: 8px 12px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.back-btn {
+  background: var(--button-bg);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.method {
+  font-weight: 700;
+  font-size: 13px;
+  width: 55px;
+  text-align: right;
+}
+
+.url {
+  color: #333;
+  font-size: 13px;
+  word-break: break-all;
+}
+
+.method-get {
+  color: #73ad53;
+}
+.method-post {
+  color: #c26e0e;
+}
+.method-put {
+  color: #3a8ad3;
+}
+.method-patch {
+  color: #a68e2a;
+}
+.method-delete {
+  color: #ad5c53;
+}
+
+.history-empty {
+  color: var(--secondary);
+  text-align: center;
+  margin-top: 30px;
+}
+
+.method-tag {
+  font-weight: 700;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 4px;
+  color: white;
+  min-width: 55px;
+  text-align: center;
+  display: inline-block;
+}
+
+.tag-success {
+  background-color: var(--success);
+}
+
+.tag-error {
+  background-color: var(--error);
+}
+
+.history-list li {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.history-list li:hover {
+  background: #fff7ef;
+}
+
+.url {
+  color: #333;
+  font-size: 13px;
+  word-break: break-all;
+  flex: 1;
+}
+
+.pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.pagination button {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 4px;
+  padding: 4px 10px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background 0.2s;
+}
+
+.pagination button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pagination button:hover:not(:disabled) {
+  background: #1b1b1b;
+}
+
+.pagination span {
+  font-size: 13px;
+  color: var(--secondary);
+}
