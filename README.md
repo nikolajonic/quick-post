@@ -1,4 +1,5 @@
 # ⚡ QuickPost — Mini Postman for Chrome
+![Uploading Screenshot_21.png…]()
 
 **QuickPost** is a lightweight and fast Chrome extension built with **React + Vite**, designed to act as a **mini Postman** directly inside your browser.  
 It allows developers to send API requests (GET, POST, PUT, PATCH, DELETE) without leaving their workflow.
