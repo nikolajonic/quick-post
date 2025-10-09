@@ -31,7 +31,6 @@ const Collections = ({
   collections,
   setCollections,
   addCollection,
-  removeCollection,
   toggleCollapse,
   onSelectRequest,
 }: Props) => {
