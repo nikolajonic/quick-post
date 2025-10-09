@@ -54,3 +54,7 @@ Follow these quick steps to install **QuickPost** locally:
    ```bash
    npm install
    npm run build
+2. Go to : chrome://extensions/
+3. Enable developer mode
+4. Add dist file that was generated after build
+
