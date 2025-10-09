@@ -1,0 +1,209 @@
+.collections-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.collections-header h4 {
+  color: var(--primary);
+  margin: 0;
+  font-weight: 700;
+}
+
+.add-btn {
+  background: var(--button-bg);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  padding: 6px 12px;
+  cursor: pointer;
+  font-size: 13px;
+  transition: background 0.2s;
+}
+.add-btn:hover {
+  background: #1b1b1b;
+}
+
+.collection-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  margin-top: 10px;
+}
+
+.collection-item {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.collection-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fffaf4;
+  padding: 8px 10px;
+  border-bottom: 1px solid #eee;
+}
+
+.collection-title .name {
+  font-weight: 600;
+  color: var(--primary);
+  flex: 1;
+}
+
+.collapse-btn,
+.add-request-btn,
+.remove-btn {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--primary);
+  transition: color 0.2s;
+}
+
+.remove-btn {
+  color: var(--error);
+  font-size: 14px;
+}
+.remove-btn:hover {
+  color: darkred;
+}
+
+.request-list {
+  list-style: none;
+  margin: 0;
+  padding: 0 10px 8px 26px;
+}
+
+.empty {
+  color: var(--secondary);
+  text-align: center;
+  padding: 10px;
+}
+
+/* --- New collection input --- */
+.new-collection-input {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.new-collection-input input {
+  flex: 1;
+  border: 1px solid var(--primary);
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  outline: none;
+}
+
+.new-collection-input input:focus {
+  box-shadow: 0 0 0 2px rgba(194, 110, 14, 0.25);
+}
+
+.save-btn,
+.cancel-btn {
+  border: none;
+  padding: 6px 10px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.save-btn {
+  background: var(--primary);
+  color: white;
+}
+.save-btn:hover {
+  background: var(--primary-light);
+}
+
+.cancel-btn {
+  background: #eee;
+  color: #444;
+}
+.cancel-btn:hover {
+  background: #ddd;
+}
+
+/* --- Request list styling --- */
+.request-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 5px 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  transition: background 0.2s ease;
+}
+.request-item:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.request-main {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+}
+
+/* --- Method badges aligned left --- */
+.method-tag {
+  width: 65px;
+  text-align: center;
+  font-size: 11px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 2px 0;
+  text-transform: uppercase;
+  flex-shrink: 0;
+}
+.method-tag.get {
+  background: #0f5132;
+  color: #d1ffdd;
+}
+.method-tag.post {
+  background: #004085;
+  color: #d6eaff;
+}
+.method-tag.put {
+  background: #856404;
+  color: #fff4d6;
+}
+.method-tag.patch {
+  background: #3c2e00;
+  color: #ffefb0;
+}
+.method-tag.delete {
+  background: #842029;
+  color: #ffd7d7;
+}
+
+.url {
+  font-size: 13px;
+  color: #ccc;
+  word-break: break-all;
+  flex: 1;
+}
+
+/* --- Delete button (right aligned small X) --- */
+.delete-btn {
+  background: transparent;
+  border: none;
+  color: #c44;
+  font-size: 13px;
+  cursor: pointer;
+  opacity: 0.7;
+  padding: 0 4px;
+  transition: all 0.2s ease;
+}
+.delete-btn:hover {
+  color: #ff4444;
+  opacity: 1;
+  transform: scale(1.1);
+}

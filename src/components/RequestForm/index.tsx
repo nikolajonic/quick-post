@@ -1,29 +1,50 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import ResponseViewer from "../ResponseViewer";
 import HeaderTable from "./Headers/HeaderTable";
 import BodyInput from "./BodyInput";
-import History from "../History";
 import type { HistoryItem } from "../History";
+import type { Collection } from "../Collections";
 import "./index.css";
 
-const RequestForm = () => {
+interface RequestFormProps {
+  history: HistoryItem[];
+  setHistory: (updated: HistoryItem[]) => void;
+  collections: Collection[];
+  setCollections: React.Dispatch<React.SetStateAction<Collection[]>>;
+  prefill?: HistoryItem | null;
+  clearPrefill?: () => void;
+}
+
+const RequestForm = ({
+  history,
+  setHistory,
+  collections,
+  setCollections,
+  prefill,
+  clearPrefill,
+}: RequestFormProps) => {
   const [method, setMethod] = useState("GET");
   const [url, setUrl] = useState("");
-  const [headers, setHeaders] = useState<
-    { key: string; value: string; enabled: boolean }[]
-  >([{ key: "Content-Type", value: "application/json", enabled: true }]);
+  const [headers, setHeaders] = useState([
+    { key: "Content-Type", value: "application/json", enabled: true },
+  ]);
   const [body, setBody] = useState("");
   const [response, setResponse] = useState<{ raw: string; parsed: any } | null>(
     null
   );
   const [status, setStatus] = useState<"success" | "error" | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [showAddToCollection, setShowAddToCollection] = useState(false);
+  const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem("requestHistory");
-    if (saved) setHistory(JSON.parse(saved));
-  }, []);
+    if (prefill) {
+      setMethod(prefill.method);
+      setUrl(prefill.url);
+      setHeaders(prefill.headers || []);
+      setBody(prefill.body || "");
+      clearPrefill?.();
+    }
+  }, [prefill]);
 
   const saveHistory = (
     method: string,
@@ -63,8 +84,6 @@ const RequestForm = () => {
       const res = await fetch(url, options);
       const text = await res.text();
 
-      setStatus(res.ok ? "success" : "error");
-
       let parsed: any;
       try {
         parsed = JSON.parse(text);
@@ -73,80 +92,47 @@ const RequestForm = () => {
       }
 
       setResponse({ raw: text, parsed });
+      setStatus(res.ok ? "success" : "error");
       saveHistory(method, url, res.ok ? "success" : "error", headers, body);
+      setShowAddToCollection(true);
     } catch (err: any) {
-      setResponse({
-        raw: err.message,
-        parsed: { error: err.message },
-      });
+      setResponse({ raw: err.message, parsed: { error: err.message } });
       setStatus("error");
     }
   };
 
-  if (showHistory) {
-    return (
-      <History
-        history={history}
-        onSelect={(item) => {
-          setMethod(item.method);
-          setUrl(item.url);
-          setHeaders(item.headers ?? [{ key: "", value: "", enabled: true }]);
-          setBody(item.body ?? "");
-          setShowHistory(false);
-        }}
-        onBack={() => setShowHistory(false)}
-      />
-    );
-  }
+  const addToCollection = (collectionId: string) => {
+    setCollections((prev) => {
+      const updated = prev.map((c) =>
+        c.id === collectionId
+          ? {
+              ...c,
+              requests: [
+                ...(c.requests || []),
+                {
+                  method,
+                  url,
+                  headers,
+                  body,
+                },
+              ],
+            }
+          : c
+      );
+
+      localStorage.setItem("collections", JSON.stringify(updated));
+
+      const col = updated.find((c) => c.id === collectionId);
+      setShowTooltip(`Saved to "${col?.name}"`);
+      setShowAddToCollection(false);
+      setTimeout(() => setShowTooltip(null), 2500);
+
+      return updated;
+    });
+  };
 
   return (
-    <div className="request-form">
-      <div className="toolbar-header">
-        <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-          <img
-            src="/icon128.png"
-            alt="QuickPost logo"
-            style={{
-              height: "28px",
-              width: "28px",
-              objectFit: "contain",
-            }}
-          />
-          <h3
-            style={{
-              margin: 0,
-              color: "var(--primary)",
-              fontWeight: 700,
-              fontFamily: "monospace",
-              fontSize: "18px",
-            }}
-          >
-            QuickPost
-          </h3>
-        </div>
-
-        <button
-          className="icon-btn"
-          onClick={() => setShowHistory(true)}
-          aria-label="View history"
-        >
-          <svg
-            xmlns="http://www.w3.org/2000/svg"
-            viewBox="0 0 24 24"
-            width="20"
-            height="20"
-            fill="none"
-            stroke="#c26e0e"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <circle cx="12" cy="12" r="10" />
-            <polyline points="12 6 12 12 16 14" />
-          </svg>
-        </button>
-      </div>
-
+    <div>
       <div className="row">
         <select value={method} onChange={(e) => setMethod(e.target.value)}>
           {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
@@ -168,6 +154,27 @@ const RequestForm = () => {
       <HeaderTable headers={headers} setHeaders={setHeaders} />
       <BodyInput method={method} body={body} setBody={setBody} />
       <ResponseViewer data={response} status={status} />
+
+      {showAddToCollection && collections.length > 0 && (
+        <div className="add-to-collection">
+          <span>Add to collection:</span>
+          <select
+            onChange={(e) => addToCollection(e.target.value)}
+            defaultValue=""
+          >
+            <option value="" disabled>
+              Select collection
+            </option>
+            {collections.map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.name}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {showTooltip && <div className="tooltip-success">{showTooltip}</div>}
     </div>
   );
 };

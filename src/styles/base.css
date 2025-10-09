@@ -1,15 +1,5 @@
 @import "./variables.css";
 
-body {
-  font-family: "Inter", sans-serif;
-  background-color: #f4f4f4;
-  color: #222;
-  margin: 0;
-  padding: 0;
-  width: 500px;
-  min-height: 520px;
-}
-
 h2 {
   text-align: center;
   margin: 16px 0 24px;
@@ -20,4 +10,17 @@ h2 {
 
 button {
   font-family: inherit;
+}
+
+html,
+body {
+  font-family: "Inter", sans-serif;
+  background-color: var(--card-bg);
+  color: #222;
+  margin: 0;
+  padding: 0;
+  width: 500px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }

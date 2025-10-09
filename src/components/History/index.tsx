@@ -39,35 +39,6 @@ const History: FC<HistoryProps> = ({ history, onSelect, onBack }) => {
 
   return (
     <div className="history-view">
-      <div
-        style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "8px",
-          marginBottom: "16px",
-        }}
-      >
-        <img
-          src="/icon128.png"
-          alt="QuickPost logo"
-          style={{
-            height: "28px",
-            width: "28px",
-            objectFit: "contain",
-          }}
-        />
-        <h3
-          style={{
-            margin: 0,
-            color: "var(--primary)",
-            fontWeight: 700,
-            fontFamily: "monospace",
-            fontSize: "18px",
-          }}
-        >
-          QuickPost
-        </h3>
-      </div>
       <div className="history-header">
         <button onClick={onBack} className="back-btn">
           ← Back
@@ -81,14 +52,17 @@ const History: FC<HistoryProps> = ({ history, onSelect, onBack }) => {
 
       <ul className="history-list">
         {currentPageItems.map((item, i) => (
-          <li key={i} onClick={() => onSelect(item)}>
-            <span
-              className={`method-tag ${
-                item.status === "success" ? "tag-success" : "tag-error"
-              }`}
-            >
-              {item.method}
-            </span>
+          <li key={i} className="history-item" onClick={() => onSelect(item)}>
+            <div className="method-wrap">
+              <span className={`method-tag ${item.method.toLowerCase()}`}>
+                {item.method}
+              </span>
+              <span
+                className={`status-dot ${
+                  item.status === "success" ? "success" : "error"
+                }`}
+              />
+            </div>
             <span className="url">{item.url}</span>
             <span className="timestamp">{formatDateTime(item.timestamp)}</span>
           </li>
