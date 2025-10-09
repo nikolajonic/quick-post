@@ -101,7 +101,6 @@ const RequestForm = () => {
 
   return (
     <div className="request-form">
-      {/* Toolbar header */}
       <div className="toolbar-header">
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <img
@@ -148,7 +147,6 @@ const RequestForm = () => {
         </button>
       </div>
 
-      {/* Request Bar */}
       <div className="row">
         <select value={method} onChange={(e) => setMethod(e.target.value)}>
           {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
@@ -167,7 +165,6 @@ const RequestForm = () => {
         <button onClick={handleSend}>Send</button>
       </div>
 
-      {/* Headers + Body + Response */}
       <HeaderTable headers={headers} setHeaders={setHeaders} />
       <BodyInput method={method} body={body} setBody={setBody} />
       <ResponseViewer data={response} status={status} />

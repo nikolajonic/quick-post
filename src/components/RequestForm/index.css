@@ -5,9 +5,12 @@
   border-radius: 10px;
   padding: 14px;
   box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+  min-height: 520px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
-/* URL bar */
 .row {
   display: flex;
   align-items: center;
@@ -19,7 +22,6 @@
   padding: 6px;
 }
 
-/* Request method select */
 .row select {
   appearance: none;
   -webkit-appearance: none;

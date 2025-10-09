@@ -37,7 +37,6 @@
   margin-bottom: 6px;
 }
 
-/* 🎨 Pretty select dropdown inside ResponseViewer */
 .response-header select {
   appearance: none;
   -webkit-appearance: none;
@@ -53,8 +52,6 @@
   cursor: pointer;
   outline: none;
   transition: all 0.2s ease;
-
-  /* Custom orange arrow */
   background-image: url("data:image/svg+xml;utf8,<svg fill='%23c26e0e' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
   background-repeat: no-repeat;
   background-position: right 8px center;
