@@ -1,73 +1,56 @@
-# React + TypeScript + Vite
+# ⚡ QuickPost — Mini Postman for Chrome
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+**QuickPost** is a lightweight and fast Chrome extension built with **React + Vite**, designed to act as a **mini Postman** directly inside your browser.  
+It allows developers to send API requests (GET, POST, PUT, PATCH, DELETE) without leaving their workflow.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Features
 
-## React Compiler
+✅ **Fast Request Testing**
+- Send GET, POST, PUT, PATCH, and DELETE requests instantly.  
+- Enter custom URLs and headers easily.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+✅ **Header Manager**
+- Add, remove, and toggle headers dynamically.  
+- Tooltips show full header key/value on hover.
 
-## Expanding the ESLint configuration
+✅ **Request Body Editor**
+- Write and send JSON or raw text payloads.  
+- Syntax-friendly monospace input for clarity.
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+✅ **Response Viewer**
+- View responses in two modes:  
+  - **Pretty (formatted JSON)**  
+  - **Raw (plain text)**  
+- Automatically highlights successful (`✓`) or failed (`✗`) responses.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+✅ **Request History**
+- Automatically saves the last **20 API requests** (method, URL, status, date/time).  
+- Pagination for easy browsing (10 per page).  
+- Click any history entry to re-populate the form with previous settings.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+✅ **Polished Interface**
+- Clean modern UI with **orange & charcoal theme**.  
+- Responsive dropdowns, tooltips, and subtle animations.
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## 🛠️ Tech Stack
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **React 18**  
+- **Vite**  
+- **TypeScript**  
+- **CSS Modules / Variables**  
+- **Chrome Extension Manifest v3**
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+---
+
+## 🧩 Installation (as Chrome Extension)
+
+Follow these quick steps to install **QuickPost** locally:
+
+1. Run a production build:
+   ```bash
+   npm install
+   npm run build
