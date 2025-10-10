@@ -13,9 +13,25 @@ interface RequestFormProps {
   setHistory: (updated: HistoryItem[]) => void;
   collections: Collection[];
   setCollections: React.Dispatch<React.SetStateAction<Collection[]>>;
-  globalSettings: GlobalSettingsData; // ✅ new
+  globalSettings: GlobalSettingsData;
   prefill?: HistoryItem | null;
   clearPrefill?: () => void;
+
+  // 👇 new props
+  currentRequest: {
+    method: string;
+    url: string;
+    headers: { key: string; value: string; enabled: boolean }[];
+    body: string;
+  };
+  setCurrentRequest: React.Dispatch<
+    React.SetStateAction<{
+      method: string;
+      url: string;
+      headers: { key: string; value: string; enabled: boolean }[];
+      body: string;
+    }>
+  >;
 }
 
 declare const chrome: any;
@@ -28,13 +44,10 @@ const RequestForm = ({
   globalSettings,
   prefill,
   clearPrefill,
+  currentRequest,
+  setCurrentRequest,
 }: RequestFormProps) => {
-  const [method, setMethod] = useState("GET");
-  const [url, setUrl] = useState("");
-  const [headers, setHeaders] = useState([
-    { key: "Content-Type", value: "application/json", enabled: true },
-  ]);
-  const [body, setBody] = useState("");
+  const { method, url, headers, body } = currentRequest;
   const [response, setResponse] = useState<{
     raw: string;
     parsed: any;
@@ -52,15 +65,26 @@ const RequestForm = ({
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
+  // ✅ Find matching collection
+  const matchingCollection = getMatchingCollection(collections, url);
+
+  // ✅ Choose base URL (collection > global)
+  const baseUrl =
+    matchingCollection?.baseUrl?.trim() || globalSettings.baseUrl?.trim() || "";
+
   useEffect(() => {
     if (prefill) {
-      setMethod(prefill.method);
-      setUrl(prefill.url);
-      setHeaders(prefill.headers || []);
-      setBody(prefill.body || "");
+      setCurrentRequest({
+        method: prefill.method,
+        url: prefill.url,
+        headers: prefill.headers || [
+          { key: "Content-Type", value: "application/json", enabled: true },
+        ],
+        body: prefill.body || "",
+      });
       clearPrefill?.();
     }
-  }, [prefill]);
+  }, [prefill, setCurrentRequest, clearPrefill]);
 
   const saveHistory = (
     method: string,
@@ -95,15 +119,6 @@ const RequestForm = ({
     if (!url) return alert("Enter URL");
 
     const start = performance.now();
-
-    // ✅ Find matching collection
-    const matchingCollection = getMatchingCollection(collections, url);
-
-    // ✅ Choose base URL (collection > global)
-    const baseUrl =
-      matchingCollection?.baseUrl?.trim() ||
-      globalSettings.baseUrl?.trim() ||
-      "";
 
     // ✅ Compute final URL
     const finalUrl =
@@ -176,22 +191,31 @@ const RequestForm = ({
 
   const addToCollection = (collectionId: string) => {
     setCollections((prev) => {
-      const updated = prev.map((c) =>
-        c.id === collectionId
-          ? {
-              ...c,
-              requests: [
-                ...(c.requests || []),
-                {
-                  method,
-                  url,
-                  headers,
-                  body,
-                },
-              ],
-            }
-          : c
+      const updated = [...prev];
+      const collectionIndex = updated.findIndex((c) => c.id === collectionId);
+
+      if (collectionIndex === -1) return prev;
+
+      const col = updated[collectionIndex];
+
+      const exists = col.requests.some(
+        (r) =>
+          r.method.toLowerCase() === method.toLowerCase() &&
+          r.url.trim() === url.trim()
       );
+
+      if (exists) {
+        setShowTooltip(`Request already exists in "${col.name}"`);
+
+        setTimeout(() => setShowTooltip(null), 2500);
+        return prev;
+      }
+
+      const newRequest = { method, url, headers, body };
+      updated[collectionIndex] = {
+        ...col,
+        requests: [...(col.requests || []), newRequest],
+      };
 
       const isExtension = window.location.protocol === "chrome-extension:";
       if (isExtension && chrome?.storage?.local) {
@@ -200,8 +224,7 @@ const RequestForm = ({
         localStorage.setItem("collections", JSON.stringify(updated));
       }
 
-      const col = updated.find((c) => c.id === collectionId);
-      setShowTooltip(`Saved to "${col?.name}"`);
+      setShowTooltip(`Saved to "${col.name}"`);
       setShowAddToCollection(false);
       setTimeout(() => setShowTooltip(null), 2500);
 
@@ -212,7 +235,12 @@ const RequestForm = ({
   return (
     <div>
       <div className="row">
-        <select value={method} onChange={(e) => setMethod(e.target.value)}>
+        <select
+          value={method}
+          onChange={(e) =>
+            setCurrentRequest((prev) => ({ ...prev, method: e.target.value }))
+          }
+        >
           {["GET", "POST", "PUT", "PATCH", "DELETE"].map((m) => (
             <option key={m} value={m}>
               {m}
@@ -220,17 +248,47 @@ const RequestForm = ({
           ))}
         </select>
 
+        {/* ✅ Show {baseURL} only if exists */}
+        {baseUrl && (
+          <div className="baseurl-tag" data-title={baseUrl}>
+            {"{baseURL}"}
+          </div>
+        )}
+
         <input
           placeholder="Enter request URL"
           value={url}
-          onChange={(e) => setUrl(e.target.value)}
+          onChange={(e) =>
+            setCurrentRequest((prev) => ({ ...prev, url: e.target.value }))
+          }
         />
 
         <button onClick={handleSend}>Send</button>
       </div>
 
-      <HeaderTable headers={headers} setHeaders={setHeaders} />
-      <BodyInput method={method} body={body} setBody={setBody} />
+      <HeaderTable
+        headers={headers}
+        setHeaders={(newHeaders) =>
+          setCurrentRequest((prev) => ({
+            ...prev,
+            headers:
+              typeof newHeaders === "function"
+                ? newHeaders(prev.headers)
+                : newHeaders,
+          }))
+        }
+      />
+
+      <BodyInput
+        method={method}
+        body={body}
+        setBody={(newBody) =>
+          setCurrentRequest((prev) => ({
+            ...prev,
+            body: typeof newBody === "function" ? newBody(prev.body) : newBody,
+          }))
+        }
+      />
       <ResponseViewer data={response} status={status} />
 
       {showAddToCollection && collections.length > 0 && (
@@ -252,7 +310,17 @@ const RequestForm = ({
         </div>
       )}
 
-      {showTooltip && <div className="tooltip-success">{showTooltip}</div>}
+      {showTooltip && (
+        <div
+          className={
+            showTooltip.includes("exists")
+              ? "tooltip-warning"
+              : "tooltip-success"
+          }
+        >
+          {showTooltip}
+        </div>
+      )}
     </div>
   );
 };

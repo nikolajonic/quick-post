@@ -31,6 +31,15 @@ const App = () => {
   const [loadedCollections, setLoadedCollections] = useState(false);
   const [loadedHistory, setLoadedHistory] = useState(false);
 
+  const [currentRequest, setCurrentRequest] = useState({
+    method: "GET",
+    url: "",
+    headers: [
+      { key: "Content-Type", value: "application/json", enabled: true },
+    ],
+    body: "",
+  });
+
   // ✅ Load Global Settings
   useEffect(() => {
     const saved = localStorage.getItem("globalSettings");
@@ -223,12 +232,10 @@ const App = () => {
     </div>
   );
 
-  // ✅ Main Render
   return (
     <div className="app">
       {renderHeader()}
 
-      {/* Tabs only when not viewing History or Settings */}
       {!showHistory && !showGlobalSettings && (
         <div className="tabs">
           <button
@@ -270,7 +277,9 @@ const App = () => {
             setCollections={setCollections}
             prefill={selectedHistoryItem}
             clearPrefill={() => setSelectedHistoryItem(null)}
-            globalSettings={globalSettings} // ✅ ADD THIS
+            globalSettings={globalSettings}
+            currentRequest={currentRequest}
+            setCurrentRequest={setCurrentRequest}
           />
         ) : (
           <Collections
