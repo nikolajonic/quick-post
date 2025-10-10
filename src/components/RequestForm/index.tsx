@@ -4,13 +4,16 @@ import HeaderTable from "./Headers/HeaderTable";
 import BodyInput from "./BodyInput";
 import type { HistoryItem } from "../History";
 import type { Collection } from "../Collections";
+import type { GlobalSettingsData } from "../GlobalSettings";
 import "./index.css";
+import { getMatchingCollection } from "../../helpers";
 
 interface RequestFormProps {
   history: HistoryItem[];
   setHistory: (updated: HistoryItem[]) => void;
   collections: Collection[];
   setCollections: React.Dispatch<React.SetStateAction<Collection[]>>;
+  globalSettings: GlobalSettingsData; // ✅ new
   prefill?: HistoryItem | null;
   clearPrefill?: () => void;
 }
@@ -22,6 +25,7 @@ const RequestForm = ({
   setHistory,
   collections,
   setCollections,
+  globalSettings,
   prefill,
   clearPrefill,
 }: RequestFormProps) => {
@@ -37,6 +41,12 @@ const RequestForm = ({
     statusCode?: number;
     statusText?: string;
     timeMs?: number;
+    request?: {
+      method: string;
+      url: string;
+      headers?: Record<string, string>;
+      body?: string;
+    };
   } | null>(null);
   const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
@@ -74,7 +84,6 @@ const RequestForm = ({
     setHistory(updated);
 
     const isExtension = window.location.protocol === "chrome-extension:";
-
     if (isExtension && chrome?.storage?.local) {
       chrome.storage.local.set({ requestHistory: updated });
     } else {
@@ -87,18 +96,42 @@ const RequestForm = ({
 
     const start = performance.now();
 
-    const options: RequestInit = {
-      method,
-      headers: headers.reduce((acc, { key, value, enabled }) => {
-        if (key && enabled) acc[key] = value;
-        return acc;
-      }, {} as Record<string, string>),
-    };
+    // ✅ Find matching collection
+    const matchingCollection = getMatchingCollection(collections, url);
 
+    // ✅ Choose base URL (collection > global)
+    const baseUrl =
+      matchingCollection?.baseUrl?.trim() ||
+      globalSettings.baseUrl?.trim() ||
+      "";
+
+    // ✅ Compute final URL
+    const finalUrl =
+      baseUrl && !/^https?:\/\//.test(url)
+        ? `${baseUrl.replace(/\/$/, "")}/${url.replace(/^\//, "")}`
+        : url;
+
+    // ✅ Build headers
+    const finalHeaders = headers.reduce((acc, { key, value, enabled }) => {
+      if (key && enabled) acc[key] = value;
+      return acc;
+    }, {} as Record<string, string>);
+
+    // ✅ Choose auth (collection > global)
+    const auth =
+      matchingCollection?.auth?.token && matchingCollection?.auth?.key
+        ? matchingCollection.auth
+        : globalSettings.auth;
+
+    if (auth?.key && auth?.token) {
+      finalHeaders[auth.key] = auth.token;
+    }
+
+    const options: RequestInit = { method, headers: finalHeaders };
     if (!["GET", "DELETE"].includes(method)) options.body = body;
 
     try {
-      const res = await fetch(url, options);
+      const res = await fetch(finalUrl, options);
       const end = performance.now();
       const text = await res.text();
 
@@ -115,10 +148,21 @@ const RequestForm = ({
         statusCode: res.status,
         statusText: res.statusText,
         timeMs: end - start,
+        request: {
+          method,
+          url: finalUrl,
+          headers: finalHeaders,
+          body,
+        },
       });
-
       setStatus(res.ok ? "success" : "error");
-      saveHistory(method, url, res.ok ? "success" : "error", headers, body);
+      saveHistory(
+        method,
+        finalUrl,
+        res.ok ? "success" : "error",
+        headers,
+        body
+      );
       setShowAddToCollection(true);
     } catch (err: any) {
       setResponse({
@@ -150,7 +194,6 @@ const RequestForm = ({
       );
 
       const isExtension = window.location.protocol === "chrome-extension:";
-
       if (isExtension && chrome?.storage?.local) {
         chrome.storage.local.set({ collections: updated });
       } else {

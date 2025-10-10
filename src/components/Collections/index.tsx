@@ -2,11 +2,18 @@ import { useState } from "react";
 import "./index.css";
 import HeaderTable from "../RequestForm/Headers/HeaderTable";
 import BodyInput from "../RequestForm/BodyInput";
+import CollectionSettings from "../CollectionSettings";
+import SettingsSVG from "../svgs/settings";
 
 export interface Collection {
   id: string;
   name: string;
   collapsed: boolean;
+  baseUrl?: string;
+  auth?: {
+    key: string;
+    token: string;
+  };
   requests: {
     method: string;
     url: string;
@@ -41,6 +48,7 @@ const Collections = ({
   const [newCollectionName, setNewCollectionName] = useState("");
   const [adding, setAdding] = useState(false);
   const [creatingFor, setCreatingFor] = useState<string | null>(null);
+  const [openSettings, setOpenSettings] = useState<string | null>(null);
 
   // Local states for inline request form
   const [method, setMethod] = useState("GET");
@@ -177,10 +185,24 @@ const Collections = ({
                 <span
                   className="name"
                   onClick={() => toggleCollapse(col.id)}
-                  style={{ cursor: "pointer" }}
+                  style={{
+                    cursor: "pointer",
+                    fontFamily: "monospace",
+                    fontSize: 16,
+                  }}
                 >
                   {col.name}
                 </span>
+                <button
+                  className="icon-btn"
+                  onClick={() =>
+                    setOpenSettings(openSettings === col.id ? null : col.id)
+                  }
+                  aria-label="Collection settings"
+                  title="Collection settings"
+                >
+                  <SettingsSVG />
+                </button>
                 <button
                   className="remove-btn"
                   onClick={() => deleteCollection(col.id)}
@@ -189,7 +211,34 @@ const Collections = ({
                   ✕
                 </button>
               </div>
-
+              {openSettings === col.id && (
+                <CollectionSettings
+                  id={col.id}
+                  baseUrl={col.baseUrl}
+                  auth={col.auth}
+                  onSave={(id, data) => {
+                    setCollections((prev) => {
+                      const updated = prev.map((c) =>
+                        c.id === id
+                          ? { ...c, baseUrl: data.baseUrl, auth: data.auth }
+                          : c
+                      );
+                      const isExtension =
+                        window.location.protocol === "chrome-extension:";
+                      if (isExtension && chrome?.storage?.local) {
+                        chrome.storage.local.set({ collections: updated });
+                      } else {
+                        localStorage.setItem(
+                          "collections",
+                          JSON.stringify(updated)
+                        );
+                      }
+                      return updated;
+                    });
+                    setOpenSettings(null);
+                  }}
+                />
+              )}
               {!col.collapsed && (
                 <div className="collection-body">
                   {col.requests.length === 0 && (
