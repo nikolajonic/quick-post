@@ -145,23 +145,53 @@ const RequestForm = ({
     const options: RequestInit = { method, headers: finalHeaders };
     if (!["GET", "DELETE"].includes(method)) options.body = body;
 
+    const sendRequest = async (url: string, options: RequestInit) => {
+      return new Promise<{
+        ok: boolean;
+        body: string;
+        status?: number;
+        headers?: Record<string, string>;
+      }>((resolve, reject) => {
+        if (chrome?.runtime?.sendMessage) {
+          chrome.runtime.sendMessage(
+            { type: "fetch", url, options },
+            (response: any) => {
+              if (chrome.runtime.lastError) {
+                reject(new Error(chrome.runtime.lastError.message));
+                return;
+              }
+              if (response?.ok) resolve(response);
+              else reject(new Error(response?.error || "Unknown error"));
+            }
+          );
+        } else {
+          // fallback for dev mode (localhost)
+          fetch(url, options)
+            .then(async (res) => {
+              const text = await res.text();
+              resolve({ ok: res.ok, body: text, status: res.status });
+            })
+            .catch((err) => reject(err));
+        }
+      });
+    };
+
     try {
-      const res = await fetch(finalUrl, options);
+      const result: any = await sendRequest(finalUrl, options);
       const end = performance.now();
-      const text = await res.text();
 
       let parsed: any;
       try {
-        parsed = JSON.parse(text);
+        parsed = JSON.parse(result.body);
       } catch {
-        parsed = text;
+        parsed = result.body;
       }
 
       setResponse({
-        raw: text,
+        raw: result.body,
         parsed,
-        statusCode: res.status,
-        statusText: res.statusText,
+        statusCode: result.status,
+        statusText: result.statusText,
         timeMs: end - start,
         request: {
           method,
@@ -170,11 +200,12 @@ const RequestForm = ({
           body,
         },
       });
-      setStatus(res.ok ? "success" : "error");
+
+      setStatus(result.ok ? "success" : "error");
       saveHistory(
         method,
         finalUrl,
-        res.ok ? "success" : "error",
+        result.ok ? "success" : "error",
         headers,
         body
       );

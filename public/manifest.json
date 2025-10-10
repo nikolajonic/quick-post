@@ -11,5 +11,14 @@
       "128": "icon128.png"
     }
   },
-  "permissions": ["storage", "activeTab", "scripting"]
+  "background": { "service_worker": "background.js" },
+  "permissions": [
+    "storage",
+    "activeTab",
+    "scripting",
+    "https://*/",
+    "http://*/"
+  ],
+
+  "host_permissions": ["https://*/", "http://*/"]
 }
