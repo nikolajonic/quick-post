@@ -120,19 +120,35 @@ const RequestForm = ({
 
     const start = performance.now();
 
+    let normalizedBase = baseUrl.trim();
+
+    // ✅ Always ensure baseUrl has protocol
+    if (normalizedBase && !/^https?:\/\//i.test(normalizedBase)) {
+      normalizedBase = `https://${normalizedBase}`;
+    }
+
+    let normalizedUrl = url.trim();
+
+    // ✅ Always ensure url has protocol if baseUrl is empty
+    if (
+      !normalizedBase &&
+      normalizedUrl &&
+      !/^https?:\/\//i.test(normalizedUrl)
+    ) {
+      normalizedUrl = `https://${normalizedUrl}`;
+    }
+
     // ✅ Compute final URL
     const finalUrl =
-      baseUrl && !/^https?:\/\//.test(url)
-        ? `${baseUrl.replace(/\/$/, "")}/${url.replace(/^\//, "")}`
-        : url;
+      normalizedBase && !/^https?:\/\//i.test(url)
+        ? `${normalizedBase.replace(/\/$/, "")}/${url.replace(/^\//, "")}`
+        : normalizedUrl;
 
-    // ✅ Build headers
     const finalHeaders = headers.reduce((acc, { key, value, enabled }) => {
       if (key && enabled) acc[key] = value;
       return acc;
     }, {} as Record<string, string>);
 
-    // ✅ Choose auth (collection > global)
     const auth =
       matchingCollection?.auth?.token && matchingCollection?.auth?.key
         ? matchingCollection.auth
@@ -146,34 +162,69 @@ const RequestForm = ({
     if (!["GET", "DELETE"].includes(method)) options.body = body;
 
     const sendRequest = async (url: string, options: RequestInit) => {
-      return new Promise<{
-        ok: boolean;
-        body: string;
-        status?: number;
-        headers?: Record<string, string>;
-      }>((resolve, reject) => {
-        if (chrome?.runtime?.sendMessage) {
-          chrome.runtime.sendMessage(
-            { type: "fetch", url, options },
-            (response: any) => {
-              if (chrome.runtime.lastError) {
-                reject(new Error(chrome.runtime.lastError.message));
-                return;
+      let normalizedHeaders: Record<string, string> = {};
+
+      if (options.headers instanceof Headers) {
+        normalizedHeaders = Object.fromEntries(options.headers.entries());
+      } else if (Array.isArray(options.headers)) {
+        normalizedHeaders = Object.fromEntries(options.headers);
+      } else if (typeof options.headers === "object" && options.headers) {
+        normalizedHeaders = { ...(options.headers as Record<string, string>) };
+      }
+
+      // Build serializable safe options
+      const safeOptions = {
+        method: options.method || "GET",
+        headers: normalizedHeaders,
+        body:
+          typeof options.body === "object" && options.body !== null
+            ? JSON.stringify(options.body)
+            : (options.body as string | null) || null,
+      };
+
+      // Ensure Content-Type if we have a body
+      if (safeOptions.body && !safeOptions.headers["Content-Type"]) {
+        safeOptions.headers["Content-Type"] = "application/json";
+      }
+
+      return new Promise<{ ok: boolean; body: string; status: number }>(
+        (resolve, reject) => {
+          if (chrome?.runtime?.sendMessage) {
+            console.log(
+              "📤 About to send to background:",
+              JSON.stringify(safeOptions, null, 2)
+            );
+            chrome.runtime.sendMessage(
+              {
+                type: "fetch",
+                url,
+                method: safeOptions.method,
+                headers: safeOptions.headers,
+                body: safeOptions.body,
+              },
+              (response: any) => {
+                console.log("Popup sending request:", { url, safeOptions });
+                if (chrome.runtime.lastError)
+                  return reject(new Error(chrome.runtime.lastError.message));
+
+                if (!response)
+                  return reject(new Error("No response from background"));
+
+                if (response.ok) resolve(response);
+                else reject(new Error(response.error || "Unknown error"));
               }
-              if (response?.ok) resolve(response);
-              else reject(new Error(response?.error || "Unknown error"));
-            }
-          );
-        } else {
-          // fallback for dev mode (localhost)
-          fetch(url, options)
-            .then(async (res) => {
-              const text = await res.text();
-              resolve({ ok: res.ok, body: text, status: res.status });
-            })
-            .catch((err) => reject(err));
+            );
+          } else {
+            // Fallback for localhost dev
+            fetch(url, safeOptions)
+              .then(async (res) => {
+                const text = await res.text();
+                resolve({ ok: res.ok, body: text, status: res.status });
+              })
+              .catch(reject);
+          }
         }
-      });
+      );
     };
 
     try {
@@ -279,7 +330,7 @@ const RequestForm = ({
           ))}
         </select>
 
-        {/* ✅ Show {baseURL} only if exists */}
+        {/* Show {baseURL} only if exists */}
         {baseUrl && (
           <div className="baseurl-tag" data-title={baseUrl}>
             {"{baseURL}"}
