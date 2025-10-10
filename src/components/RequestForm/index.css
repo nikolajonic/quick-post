@@ -3,7 +3,7 @@
 .row {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
   margin-bottom: 14px;
   border: 1px solid var(--border);
   border-radius: 8px;
@@ -90,6 +90,16 @@
   animation: fadeInOut 2.5s ease-in-out forwards;
 }
 
+.tooltip-warning {
+  margin-top: 8px;
+  background: var(--warning);
+  color: white;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 13px;
+  animation: fadeInOut 2.5s ease-in-out forwards;
+}
+
 @keyframes fadeInOut {
   0% {
     opacity: 0;
@@ -106,4 +116,38 @@
     opacity: 0;
     transform: translateY(-5px);
   }
+}
+
+.baseurl-tag {
+  background: rgba(0, 123, 255, 0.08);
+  border: 1px solid rgba(0, 123, 255, 0.4);
+  border-radius: 6px;
+  color: #007bff;
+  font-family: monospace;
+  font-size: 12px;
+  padding: 4px 8px;
+  margin-right: 6px;
+  cursor: default;
+  position: relative;
+  white-space: nowrap;
+  transition: background 0.2s ease, border 0.2s ease;
+}
+
+.baseurl-tag:hover {
+  background: rgba(0, 123, 255, 0.15);
+  border-color: #007bff;
+}
+.baseurl-tag[data-title]:hover::after {
+  content: attr(data-title);
+  position: absolute;
+  bottom: -30px;
+  left: 0;
+  background: #222;
+  color: #fff;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }

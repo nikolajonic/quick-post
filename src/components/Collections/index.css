@@ -36,7 +36,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   margin-bottom: 8px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .collection-title {
@@ -255,4 +255,97 @@
 
 .row2 button:hover {
   background: #1b1b1b;
+}
+
+.row3 {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  margin-bottom: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: white;
+  padding: 6px;
+  width: 100%;
+}
+
+.row3 select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  background: #fff;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 36px 8px 12px;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23c26e0e' height='18' viewBox='0 0 24 24' width='18' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 18px;
+}
+
+.row3 input {
+  flex: 1;
+  border: none;
+  font-size: 14px;
+  padding: 8px;
+  outline: none;
+}
+
+.row3 button {
+  background: var(--button-bg);
+  color: var(--button-text);
+  border: none;
+  border-radius: 6px;
+  padding: 8px 10px;
+  cursor: pointer;
+}
+
+.row3 button:hover {
+  background: #1b1b1b;
+}
+
+.menu-wrapper {
+  position: relative;
+}
+
+.menu-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: 22px;
+  right: 0;
+  background: white;
+  border: 1px solid #c26e0e;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  min-width: 110px;
+  z-index: 50;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.dropdown-menu button {
+  background: transparent;
+  border: none;
+  color: var(--primary);
+  font-size: 13px;
+  padding: 6px 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dropdown-menu button:hover {
+  background: var(--primary-light);
+  color: var(--button-text);
 }
