@@ -24,6 +24,7 @@ const App = () => {
     baseUrl: "",
     auth: { key: "", token: "" },
   });
+  const [baseUrl, setBaseUrl] = useState("");
 
   const [selectedHistoryItem, setSelectedHistoryItem] =
     useState<HistoryItem | null>(null);
@@ -285,6 +286,8 @@ const App = () => {
             globalSettings={globalSettings}
             currentRequest={currentRequest}
             setCurrentRequest={setCurrentRequest}
+            baseUrl={baseUrl}
+            setBaseUrl={setBaseUrl}
           />
         ) : (
           <Collections

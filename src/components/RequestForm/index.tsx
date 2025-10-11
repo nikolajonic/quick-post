@@ -29,6 +29,8 @@ interface RequestFormProps {
       body: string;
     }>
   >;
+  baseUrl: string;
+  setBaseUrl: React.Dispatch<React.SetStateAction<string>>;
 }
 
 declare const chrome: any;
@@ -43,6 +45,8 @@ const RequestForm = ({
   clearPrefill,
   currentRequest,
   setCurrentRequest,
+  baseUrl,
+  setBaseUrl,
 }: RequestFormProps) => {
   const { method, url, headers, body } = currentRequest;
   const [response, setResponse] = useState<{
@@ -62,11 +66,6 @@ const RequestForm = ({
   const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
-
-  // Keep baseUrl in local state
-  const [baseUrl, setBaseUrl] = useState(
-    prefill?.baseUrl?.trim() || globalSettings.baseUrl?.trim() || ""
-  );
 
   useEffect(() => {
     if (!prefill) return;
