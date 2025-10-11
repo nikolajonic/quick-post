@@ -1,4 +1,4 @@
-import type { Header, HistoryItem, Collection } from "../types";
+import type { HistoryItem, Collection } from "../types";
 import type { GlobalSettingsData } from "../components/GlobalSettings";
 
 /* -------------------------------------------------------------
@@ -199,7 +199,6 @@ export const sendRequest = async (
 
 /** Add request to a specific collection (with UI feedback) */
 export const addRequestToCollection = (
-  collections: Collection[],
   setCollections: React.Dispatch<React.SetStateAction<Collection[]>>,
   method: string,
   url: string,
