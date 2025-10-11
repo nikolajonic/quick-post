@@ -13,4 +13,5 @@ export default defineConfig({
     },
     copyPublicDir: true,
   },
+  base: "/quick-post/",
 });
