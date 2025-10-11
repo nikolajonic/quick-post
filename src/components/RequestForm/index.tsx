@@ -65,10 +65,7 @@ const RequestForm = ({
         url,
         method,
         headers,
-        body,
-        collections,
-        globalSettings.auth,
-        prefill
+        body
       );
 
       setResponse(result);
@@ -206,7 +203,6 @@ const RequestForm = ({
           <select
             onChange={(e) =>
               addRequestToCollection(
-                collections,
                 setCollections,
                 method,
                 url,
