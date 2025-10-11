@@ -310,6 +310,7 @@ const RequestForm = ({
 
         {baseUrl && (
           <div className="baseurl-tag" data-title={baseUrl}>
+            {matchingCollections.length === 1 && "{baseURL}"}
             {matchingCollections.length > 1 && (
               <span
                 onClick={() => {
