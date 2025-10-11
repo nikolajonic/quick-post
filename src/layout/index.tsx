@@ -8,6 +8,9 @@ import { useGlobalSettings } from "../context/GlobalSettingsContext";
 import { useCurrentCollection } from "../context/CurrentCollectionContext";
 import HistorySVG from "../components/svgs/history";
 import SettingsSVG from "../components/svgs/settings";
+
+import logo from "../assets/icon128.png";
+
 import "../styles/base.css";
 
 const Layout = () => {
@@ -53,7 +56,7 @@ const Layout = () => {
       <div className="toolbar-header">
         <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
           <img
-            src="/icon128.png"
+            src={logo}
             alt="QuickPost logo"
             style={{ height: 28, width: 28 }}
           />
