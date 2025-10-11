@@ -1,32 +1,18 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import "./index.css";
 import CollectionSettings from "../CollectionSettings";
 import SettingsSVG from "../svgs/settings";
 import CreateRequestForm from "../CreateRequest";
-import MoreSVG from "../svgs/more"; // ✅ new SVG for 3-dot menu
+import MoreSVG from "../svgs/more";
 import EditSVG from "../svgs/edit";
 import DeleteSVG from "../svgs/delete";
 
-export interface Collection {
-  id: string;
-  name: string;
-  collapsed: boolean;
-  baseUrl?: string;
-  auth?: {
-    key: string;
-    token: string;
-  };
-  requests: {
-    method: string;
-    url: string;
-    headers?: { key: string; value: string; enabled: boolean }[];
-    body?: string;
-  }[];
-}
+import { useCollections } from "../../context/CollectionsContext";
+import type { Collection } from "../../types";
+
+declare const chrome: any;
 
 interface Props {
-  collections: Collection[];
-  setCollections: React.Dispatch<React.SetStateAction<Collection[]>>;
   addCollection: (name: string) => void;
   removeCollection: (id: string) => void;
   toggleCollapse: (id: string) => void;
@@ -37,24 +23,23 @@ interface Props {
       headers?: { key: string; value: string; enabled: boolean }[];
       body?: string;
     },
-    collection: Collection // ✅ added
+    collection: Collection
   ) => void;
 }
 
-declare const chrome: any;
-
 const Collections = ({
-  collections,
-  setCollections,
   addCollection,
+  removeCollection,
   toggleCollapse,
   onSelectRequest,
 }: Props) => {
+  const { collections, setCollections } = useCollections();
+
   const [newCollectionName, setNewCollectionName] = useState("");
   const [adding, setAdding] = useState(false);
   const [creatingFor, setCreatingFor] = useState<string | null>(null);
   const [openSettings, setOpenSettings] = useState<string | null>(null);
-  const [openMenu, setOpenMenu] = useState<string | null>(null); // ✅ track which request’s menu is open
+  const [openMenu, setOpenMenu] = useState<string | null>(null);
   const [editingRequest, setEditingRequest] = useState<{
     collectionId: string;
     requestIndex: number;
@@ -66,6 +51,20 @@ const Collections = ({
     };
   } | null>(null);
 
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (!(e.target as HTMLElement).closest(".menu-wrapper")) {
+        setOpenMenu(null);
+      }
+    };
+
+    document.addEventListener("click", handleClickOutside);
+    return () => document.removeEventListener("click", handleClickOutside);
+  }, []);
+
+  // ✅ Add new collection
   const handleAdd = () => {
     if (!newCollectionName.trim()) return;
     addCollection(newCollectionName.trim());
@@ -73,6 +72,7 @@ const Collections = ({
     setAdding(false);
   };
 
+  // ✅ Delete single request
   const deleteRequest = (collectionId: string, index: number) => {
     setCollections((prev) => {
       const updated = prev.map((c) =>
@@ -81,30 +81,22 @@ const Collections = ({
           : c
       );
 
-      const isExtension = window.location.protocol === "chrome-extension:";
-      if (isExtension && chrome?.storage?.local) {
-        chrome.storage.local.set({ collections: updated });
-      } else {
-        localStorage.setItem("collections", JSON.stringify(updated));
-      }
-
+      persistCollections(updated);
       return updated;
     });
   };
 
+  // ✅ Delete whole collection
   const deleteCollection = (id: string) => {
     setCollections((prev) => {
       const updated = prev.filter((c) => c.id !== id);
-      const isExtension = window.location.protocol === "chrome-extension:";
-      if (isExtension && chrome?.storage?.local) {
-        chrome.storage.local.set({ collections: updated });
-      } else {
-        localStorage.setItem("collections", JSON.stringify(updated));
-      }
+      persistCollections(updated);
       return updated;
     });
+    removeCollection(id);
   };
 
+  // ✅ Save new request
   const saveRequestToCollection = (
     collectionId: string,
     newRequest: {
@@ -121,17 +113,20 @@ const Collections = ({
           : c
       );
 
-      const isExtension = window.location.protocol === "chrome-extension:";
-      if (isExtension && chrome?.storage?.local) {
-        chrome.storage.local.set({ collections: updated });
-      } else {
-        localStorage.setItem("collections", JSON.stringify(updated));
-      }
-
+      persistCollections(updated);
       return updated;
     });
-
     setCreatingFor(null);
+  };
+
+  // ✅ Persist collections in chrome storage or localStorage
+  const persistCollections = (updated: Collection[]) => {
+    const isExtension = window.location.protocol === "chrome-extension:";
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.set({ collections: updated });
+    } else {
+      localStorage.setItem("collections", JSON.stringify(updated));
+    }
   };
 
   return (
@@ -172,14 +167,20 @@ const Collections = ({
               <div className="collection-title">
                 <button
                   className="collapse-btn"
-                  onClick={() => toggleCollapse(col.id)}
+                  onClick={() => {
+                    toggleCollapse(col.id);
+                    setOpenSettings(null);
+                  }}
                 >
                   {col.collapsed ? "▶" : "▼"}
                 </button>
 
                 <span
                   className="name"
-                  onClick={() => toggleCollapse(col.id)}
+                  onClick={() => {
+                    toggleCollapse(col.id);
+                    setOpenSettings(null);
+                  }}
                   style={{
                     cursor: "pointer",
                     fontFamily: "monospace",
@@ -202,7 +203,9 @@ const Collections = ({
 
                 <button
                   className="remove-btn"
-                  onClick={() => deleteCollection(col.id)}
+                  onClick={() =>
+                    setConfirmDelete(confirmDelete === col.id ? null : col.id)
+                  }
                   title="Delete this collection"
                 >
                   ✕
@@ -221,16 +224,7 @@ const Collections = ({
                           ? { ...c, baseUrl: data.baseUrl, auth: data.auth }
                           : c
                       );
-                      const isExtension =
-                        window.location.protocol === "chrome-extension:";
-                      if (isExtension && chrome?.storage?.local) {
-                        chrome.storage.local.set({ collections: updated });
-                      } else {
-                        localStorage.setItem(
-                          "collections",
-                          JSON.stringify(updated)
-                        );
-                      }
+                      persistCollections(updated);
                       return updated;
                     });
                     setOpenSettings(null);
@@ -291,19 +285,12 @@ const Collections = ({
                                           requestIndex: i,
                                           data: r,
                                         });
-                                        setCreatingFor(col.id); // ✅ ensures the form actually shows up
+                                        setCreatingFor(col.id);
                                         setOpenMenu(null);
                                       }}
                                     >
-                                      <div
-                                        style={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 5,
-                                          height: "20px",
-                                        }}
-                                      >
-                                        <EditSVG /> <p> Edit</p>
+                                      <div className="menu-item">
+                                        <EditSVG /> <p>Edit</p>
                                       </div>
                                     </button>
                                     <button
@@ -312,15 +299,8 @@ const Collections = ({
                                         setOpenMenu(null);
                                       }}
                                     >
-                                      <div
-                                        style={{
-                                          display: "flex",
-                                          alignItems: "center",
-                                          gap: 5,
-                                          height: "18px",
-                                        }}
-                                      >
-                                        <DeleteSVG /> <p> Delete</p>
+                                      <div className="menu-item">
+                                        <DeleteSVG /> <p>Delete</p>
                                       </div>
                                     </button>
                                   </div>
@@ -359,17 +339,7 @@ const Collections = ({
                                   }
                                 : c
                             );
-                            const isExt =
-                              window.location.protocol === "chrome-extension:";
-                            if (isExt && chrome?.storage?.local)
-                              chrome.storage.local.set({
-                                collections: updated,
-                              });
-                            else
-                              localStorage.setItem(
-                                "collections",
-                                JSON.stringify(updated)
-                              );
+                            persistCollections(updated);
                             return updated;
                           });
                         } else {
@@ -385,6 +355,34 @@ const Collections = ({
                       initialData={editingRequest?.data}
                     />
                   )}
+                </div>
+              )}
+
+              {/* Inline delete confirmation */}
+              {confirmDelete === col.id && (
+                <div className="inline-confirm">
+                  <p>
+                    <strong>Delete Collection</strong>
+                    <br />
+                    Are you sure you want to delete <b>{col.name}</b>?
+                  </p>
+                  <div className="confirm-buttons">
+                    <button
+                      className="yes"
+                      onClick={() => {
+                        deleteCollection(col.id);
+                        setConfirmDelete(null);
+                      }}
+                    >
+                      Yes, Delete
+                    </button>
+                    <button
+                      className="no"
+                      onClick={() => setConfirmDelete(null)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
               )}
             </li>

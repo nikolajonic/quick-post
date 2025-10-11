@@ -1,19 +1,9 @@
-import { useState } from "react";
-import type { FC } from "react";
+import { useState, type FC } from "react";
+import { useHistoryData } from "../../context/HistoryContext";
+import type { HistoryItem } from "../../types";
 import "./index.css";
 
-export interface HistoryItem {
-  method: string;
-  url: string;
-  headers: { key: string; value: string; enabled: boolean }[];
-  body: string;
-  status: "success" | "error";
-  timestamp: string;
-  baseUrl?: string; // ✅ added
-  collectionId?: string; // ✅ added
-}
 interface HistoryProps {
-  history: HistoryItem[];
   onSelect: (item: HistoryItem) => void;
   onBack: () => void;
 }
@@ -30,7 +20,8 @@ const formatDateTime = (isoString: string) => {
   });
 };
 
-const History: FC<HistoryProps> = ({ history, onSelect, onBack }) => {
+const History: FC<HistoryProps> = ({ onSelect, onBack }) => {
+  const { history } = useHistoryData();
   const [page, setPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -47,47 +38,55 @@ const History: FC<HistoryProps> = ({ history, onSelect, onBack }) => {
         <h4>Request History</h4>
       </div>
 
-      {history.length === 0 && (
+      {history.length === 0 ? (
         <p className="history-empty">No previous requests yet.</p>
-      )}
+      ) : (
+        <>
+          <ul className="history-list">
+            {currentPageItems.map((item, i) => (
+              <li
+                key={i}
+                className="history-item"
+                onClick={() => onSelect(item)}
+              >
+                <div className="method-wrap">
+                  <span className={`method-tag ${item.method.toLowerCase()}`}>
+                    {item.method}
+                  </span>
+                  <span
+                    className={`status-dot ${
+                      item.status === "success" ? "success" : "error"
+                    }`}
+                  />
+                </div>
+                <span className="url">{item.url}</span>
+                <span className="timestamp">
+                  {formatDateTime(item.timestamp)}
+                </span>
+              </li>
+            ))}
+          </ul>
 
-      <ul className="history-list">
-        {currentPageItems.map((item, i) => (
-          <li key={i} className="history-item" onClick={() => onSelect(item)}>
-            <div className="method-wrap">
-              <span className={`method-tag ${item.method.toLowerCase()}`}>
-                {item.method}
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                onClick={() => setPage((p) => Math.max(1, p - 1))}
+                disabled={page === 1}
+              >
+                ← Prev
+              </button>
+              <span>
+                Page {page} / {totalPages}
               </span>
-              <span
-                className={`status-dot ${
-                  item.status === "success" ? "success" : "error"
-                }`}
-              />
+              <button
+                onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+              >
+                Next →
+              </button>
             </div>
-            <span className="url">{item.url}</span>
-            <span className="timestamp">{formatDateTime(item.timestamp)}</span>
-          </li>
-        ))}
-      </ul>
-
-      {totalPages > 1 && (
-        <div className="pagination">
-          <button
-            onClick={() => setPage((p) => Math.max(1, p - 1))}
-            disabled={page === 1}
-          >
-            ← Prev
-          </button>
-          <span>
-            Page {page} / {totalPages}
-          </span>
-          <button
-            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-            disabled={page === totalPages}
-          >
-            Next →
-          </button>
-        </div>
+          )}
+        </>
       )}
     </div>
   );

@@ -1,5 +1,7 @@
 import { useState } from "react";
 import "./index.css";
+import { isJsonString } from "../../helpers";
+import TypesPanel from "./components/TypesPanel";
 
 interface ResponseViewerProps {
   data: {
@@ -21,16 +23,15 @@ interface ResponseViewerProps {
 const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
   const [tab, setTab] = useState<"response" | "request">("response");
   const [view, setView] = useState<"pretty" | "raw">("pretty");
+  const [showTypes, setShowTypes] = useState(false);
 
   if (!data) return null;
 
   const className = `response ${status ?? ""}`;
-
   const prettyResponse =
     typeof data.parsed === "object"
       ? JSON.stringify(data.parsed, null, 2)
       : data.parsed;
-
   const displayResponse = view === "pretty" ? prettyResponse : data.raw;
 
   const prettyRequestBody =
@@ -38,9 +39,21 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
       ? JSON.stringify(JSON.parse(data.request.body), null, 2)
       : data.request?.body;
 
+  const canShowTypes =
+    status === "success" &&
+    data.parsed &&
+    typeof data.parsed === "object" &&
+    !Array.isArray(data.parsed);
+
   return (
-    <div className={className}>
-      {/* Tabs (small, left aligned, minimal) */}
+    <div
+      className={className}
+      style={{
+        position: "relative",
+        overflow: "hidden", // prevent parent scroll
+      }}
+    >
+      {/* Tabs */}
       <div
         style={{
           display: "flex",
@@ -57,7 +70,6 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
         >
           Response
         </button>
-
         {data.request && (
           <button
             onClick={() => setTab("request")}
@@ -120,7 +132,54 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
             </select>
           </div>
 
-          <pre>{displayResponse}</pre>
+          {/* Scrollable JSON content */}
+          <pre
+            style={{
+              maxHeight: "50vh",
+              overflowY: "auto",
+              margin: 0,
+              paddingRight: "8px",
+            }}
+          >
+            {displayResponse}
+          </pre>
+
+          {/* Floating button and panel — OUTSIDE scroll area */}
+          {canShowTypes && (
+            <>
+              <button
+                style={{
+                  position: "absolute",
+                  right: "10px",
+                  bottom: showTypes ? "60%" : "00px",
+                  transform: showTypes ? "translateY(100%)" : "none",
+                  background: "#007bff",
+                  color: "#fff",
+                  border: "none",
+                  borderTopLeftRadius: "6px",
+                  borderTopRightRadius: "6px",
+                  fontSize: "11px",
+                  fontWeight: 600,
+                  padding: "0 14px",
+                  cursor: "pointer",
+                  height: "22px",
+                  boxShadow: "0 0 4px rgba(0,0,0,0.25)",
+                  zIndex: 999,
+                  opacity: 1,
+                  transition: "bottom 0.25s ease, transform 0.20s ease",
+                }}
+                onClick={() => setShowTypes(!showTypes)}
+              >
+                TYPES
+              </button>
+
+              <TypesPanel
+                visible={showTypes}
+                onClose={() => setShowTypes(false)}
+                data={data.parsed}
+              />
+            </>
+          )}
         </>
       )}
 
@@ -141,7 +200,7 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
                 display: "flex",
                 alignItems: "center",
                 gap: "10px",
-                minWidth: 0, // important for text overflow
+                minWidth: 0,
               }}
             >
               <span
@@ -155,7 +214,6 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
                 {data.request.method}
               </span>
 
-              {/* ✅ URL with tooltip on hover */}
               <span
                 title={data.request.url}
                 style={{
@@ -166,8 +224,7 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
                   textOverflow: "ellipsis",
                   whiteSpace: "nowrap",
                   display: "inline-block",
-                  maxWidth: "420px", // limit visible length
-                  cursor: "default",
+                  maxWidth: "420px",
                 }}
               >
                 {data.request.url}
@@ -200,7 +257,6 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
   );
 };
 
-// --- helpers ---
 const getTabStyle = (isActive: boolean) => ({
   background: "transparent",
   border: "none",
@@ -212,15 +268,5 @@ const getTabStyle = (isActive: boolean) => ({
   cursor: "pointer",
   transition: "border-color 0.2s, color 0.2s",
 });
-
-const isJsonString = (str?: string) => {
-  if (!str) return false;
-  try {
-    JSON.parse(str);
-    return true;
-  } catch {
-    return false;
-  }
-};
 
 export default ResponseViewer;
