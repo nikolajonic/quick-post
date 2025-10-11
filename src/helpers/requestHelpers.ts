@@ -1,5 +1,4 @@
 import type { HistoryItem, Collection } from "../types";
-import type { GlobalSettingsData } from "../components/GlobalSettings";
 
 /* -------------------------------------------------------------
  🧩  URL & Headers Utilities
@@ -140,10 +139,7 @@ export const sendRequest = async (
   url: string,
   method: string,
   headers: any[],
-  body: string,
-  collections: Collection[],
-  globalAuth?: GlobalSettingsData["auth"],
-  prefill?: HistoryItem | null
+  body: string
 ) => {
   const finalUrl = buildFinalUrl(baseUrl, url);
 
