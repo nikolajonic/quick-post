@@ -122,6 +122,8 @@
   background: rgba(0, 123, 255, 0.08);
   border: 1px solid rgba(0, 123, 255, 0.4);
   border-radius: 6px;
+  align-items: center;
+  display: inline-flex;
   color: #007bff;
   font-family: monospace;
   font-size: 12px;

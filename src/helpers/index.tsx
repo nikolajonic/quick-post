@@ -2,9 +2,11 @@ import type { Collection } from "../components/Collections";
 
 export const isExtension = window.location.protocol === "chrome-extension:";
 
-export const getMatchingCollection = (
+export const getMatchingCollections = (
   collections: Collection[],
   url: string
-): Collection | undefined => {
-  return collections.find((col) => col.requests.some((r) => r.url === url));
+) => {
+  return collections.filter((c) =>
+    c.requests?.some((r) => r.url.trim() === url.trim())
+  );
 };

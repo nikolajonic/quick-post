@@ -6,7 +6,8 @@ import type { HistoryItem } from "../History";
 import type { Collection } from "../Collections";
 import type { GlobalSettingsData } from "../GlobalSettings";
 import "./index.css";
-import { getMatchingCollection } from "../../helpers";
+import { getMatchingCollections } from "../../helpers";
+import ReplaceSVG from "../svgs/replace";
 
 interface RequestFormProps {
   history: HistoryItem[];
@@ -16,8 +17,6 @@ interface RequestFormProps {
   globalSettings: GlobalSettingsData;
   prefill?: HistoryItem | null;
   clearPrefill?: () => void;
-
-  // 👇 new props
   currentRequest: {
     method: string;
     url: string;
@@ -65,13 +64,21 @@ const RequestForm = ({
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
-  // ✅ Find matching collection
-  const matchingCollection = getMatchingCollection(collections, url);
+  // ✅ Find matching collections for this URL
+  const matchingCollections = getMatchingCollections(collections, url);
+  const [selectedCollectionId, setSelectedCollectionId] = useState<
+    string | null
+  >(null);
 
-  // ✅ Choose base URL (collection > global)
+  const matchingCollection =
+    matchingCollections.find((c) => c.id === selectedCollectionId) ||
+    matchingCollections[0];
+
+  // ✅ Compute baseURL
   const baseUrl =
     matchingCollection?.baseUrl?.trim() || globalSettings.baseUrl?.trim() || "";
 
+  // Prefill if needed
   useEffect(() => {
     if (prefill) {
       setCurrentRequest({
@@ -86,6 +93,7 @@ const RequestForm = ({
     }
   }, [prefill, setCurrentRequest, clearPrefill]);
 
+  // Save history
   const saveHistory = (
     method: string,
     url: string,
@@ -94,7 +102,6 @@ const RequestForm = ({
     body: string
   ) => {
     if (!url) return;
-
     const newItem = {
       method,
       url,
@@ -103,7 +110,6 @@ const RequestForm = ({
       status,
       timestamp: new Date().toISOString(),
     };
-
     const updated = [newItem, ...history].slice(0, 20);
     setHistory(updated);
 
@@ -115,21 +121,18 @@ const RequestForm = ({
     }
   };
 
+  // Handle Send
   const handleSend = async () => {
     if (!url) return alert("Enter URL");
 
     const start = performance.now();
-
     let normalizedBase = baseUrl.trim();
 
-    // ✅ Always ensure baseUrl has protocol
     if (normalizedBase && !/^https?:\/\//i.test(normalizedBase)) {
       normalizedBase = `https://${normalizedBase}`;
     }
 
     let normalizedUrl = url.trim();
-
-    // ✅ Always ensure url has protocol if baseUrl is empty
     if (
       !normalizedBase &&
       normalizedUrl &&
@@ -138,7 +141,6 @@ const RequestForm = ({
       normalizedUrl = `https://${normalizedUrl}`;
     }
 
-    // ✅ Compute final URL
     const finalUrl =
       normalizedBase && !/^https?:\/\//i.test(url)
         ? `${normalizedBase.replace(/\/$/, "")}/${url.replace(/^\//, "")}`
@@ -154,25 +156,20 @@ const RequestForm = ({
         ? matchingCollection.auth
         : globalSettings.auth;
 
-    if (auth?.key && auth?.token) {
-      finalHeaders[auth.key] = auth.token;
-    }
+    if (auth?.key && auth?.token) finalHeaders[auth.key] = auth.token;
 
     const options: RequestInit = { method, headers: finalHeaders };
     if (!["GET", "DELETE"].includes(method)) options.body = body;
 
     const sendRequest = async (url: string, options: RequestInit) => {
       let normalizedHeaders: Record<string, string> = {};
-
-      if (options.headers instanceof Headers) {
+      if (options.headers instanceof Headers)
         normalizedHeaders = Object.fromEntries(options.headers.entries());
-      } else if (Array.isArray(options.headers)) {
+      else if (Array.isArray(options.headers))
         normalizedHeaders = Object.fromEntries(options.headers);
-      } else if (typeof options.headers === "object" && options.headers) {
+      else if (typeof options.headers === "object" && options.headers)
         normalizedHeaders = { ...(options.headers as Record<string, string>) };
-      }
 
-      // Build serializable safe options
       const safeOptions = {
         method: options.method || "GET",
         headers: normalizedHeaders,
@@ -182,7 +179,6 @@ const RequestForm = ({
             : (options.body as string | null) || null,
       };
 
-      // Ensure Content-Type if we have a body
       if (safeOptions.body && !safeOptions.headers["Content-Type"]) {
         safeOptions.headers["Content-Type"] = "application/json";
       }
@@ -190,10 +186,6 @@ const RequestForm = ({
       return new Promise<{ ok: boolean; body: string; status: number }>(
         (resolve, reject) => {
           if (chrome?.runtime?.sendMessage) {
-            console.log(
-              "📤 About to send to background:",
-              JSON.stringify(safeOptions, null, 2)
-            );
             chrome.runtime.sendMessage(
               {
                 type: "fetch",
@@ -203,19 +195,15 @@ const RequestForm = ({
                 body: safeOptions.body,
               },
               (response: any) => {
-                console.log("Popup sending request:", { url, safeOptions });
                 if (chrome.runtime.lastError)
                   return reject(new Error(chrome.runtime.lastError.message));
-
                 if (!response)
                   return reject(new Error("No response from background"));
-
                 if (response.ok) resolve(response);
                 else reject(new Error(response.error || "Unknown error"));
               }
             );
           } else {
-            // Fallback for localhost dev
             fetch(url, safeOptions)
               .then(async (res) => {
                 const text = await res.text();
@@ -244,12 +232,7 @@ const RequestForm = ({
         statusCode: result.status,
         statusText: result.statusText,
         timeMs: end - start,
-        request: {
-          method,
-          url: finalUrl,
-          headers: finalHeaders,
-          body,
-        },
+        request: { method, url: finalUrl, headers: finalHeaders, body },
       });
 
       setStatus(result.ok ? "success" : "error");
@@ -271,15 +254,14 @@ const RequestForm = ({
     }
   };
 
+  // Add to collection
   const addToCollection = (collectionId: string) => {
     setCollections((prev) => {
       const updated = [...prev];
-      const collectionIndex = updated.findIndex((c) => c.id === collectionId);
+      const index = updated.findIndex((c) => c.id === collectionId);
+      if (index === -1) return prev;
 
-      if (collectionIndex === -1) return prev;
-
-      const col = updated[collectionIndex];
-
+      const col = updated[index];
       const exists = col.requests.some(
         (r) =>
           r.method.toLowerCase() === method.toLowerCase() &&
@@ -288,28 +270,24 @@ const RequestForm = ({
 
       if (exists) {
         setShowTooltip(`Request already exists in "${col.name}"`);
-
         setTimeout(() => setShowTooltip(null), 2500);
         return prev;
       }
 
       const newRequest = { method, url, headers, body };
-      updated[collectionIndex] = {
+      updated[index] = {
         ...col,
         requests: [...(col.requests || []), newRequest],
       };
 
       const isExtension = window.location.protocol === "chrome-extension:";
-      if (isExtension && chrome?.storage?.local) {
+      if (isExtension && chrome?.storage?.local)
         chrome.storage.local.set({ collections: updated });
-      } else {
-        localStorage.setItem("collections", JSON.stringify(updated));
-      }
+      else localStorage.setItem("collections", JSON.stringify(updated));
 
       setShowTooltip(`Saved to "${col.name}"`);
       setShowAddToCollection(false);
       setTimeout(() => setShowTooltip(null), 2500);
-
       return updated;
     });
   };
@@ -330,10 +308,33 @@ const RequestForm = ({
           ))}
         </select>
 
-        {/* Show {baseURL} only if exists */}
         {baseUrl && (
           <div className="baseurl-tag" data-title={baseUrl}>
-            {"{baseURL}"}
+            {matchingCollections.length > 1 && (
+              <span
+                onClick={() => {
+                  setSelectedCollectionId((prev) => {
+                    const currentIndex = matchingCollections.findIndex(
+                      (c) => c.id === prev
+                    );
+                    const nextIndex =
+                      currentIndex === -1 ||
+                      currentIndex === matchingCollections.length - 1
+                        ? 0
+                        : currentIndex + 1;
+                    return matchingCollections[nextIndex].id;
+                  });
+                }}
+                style={{
+                  alignItems: "center",
+                  display: "flex",
+                  cursor: "pointer",
+                }}
+              >
+                {"{baseURL}"}
+                <ReplaceSVG />
+              </span>
+            )}
           </div>
         )}
 
@@ -345,7 +346,12 @@ const RequestForm = ({
           }
         />
 
-        <button onClick={handleSend}>Send</button>
+        <button
+          onClick={handleSend}
+          style={{ marginLeft: matchingCollections.length > 1 ? "-15px" : "0" }}
+        >
+          Send
+        </button>
       </div>
 
       <HeaderTable
@@ -371,6 +377,7 @@ const RequestForm = ({
           }))
         }
       />
+
       <ResponseViewer data={response} status={status} />
 
       {showAddToCollection && collections.length > 0 && (
