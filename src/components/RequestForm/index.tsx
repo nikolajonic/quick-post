@@ -6,8 +6,6 @@ import type { HistoryItem } from "../History";
 import type { Collection } from "../Collections";
 import type { GlobalSettingsData } from "../GlobalSettings";
 import "./index.css";
-import { getMatchingCollections } from "../../helpers";
-import ReplaceSVG from "../svgs/replace";
 
 interface RequestFormProps {
   history: HistoryItem[];
@@ -60,40 +58,37 @@ const RequestForm = ({
       body?: string;
     };
   } | null>(null);
+
   const [status, setStatus] = useState<"success" | "error" | null>(null);
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
-  // ✅ Find matching collections for this URL
-  const matchingCollections = getMatchingCollections(collections, url);
-  const [selectedCollectionId, setSelectedCollectionId] = useState<
-    string | null
-  >(null);
+  // Keep baseUrl in local state
+  const [baseUrl, setBaseUrl] = useState(
+    prefill?.baseUrl?.trim() || globalSettings.baseUrl?.trim() || ""
+  );
 
-  const matchingCollection =
-    matchingCollections.find((c) => c.id === selectedCollectionId) ||
-    matchingCollections[0];
-
-  // ✅ Compute baseURL
-  const baseUrl =
-    matchingCollection?.baseUrl?.trim() || globalSettings.baseUrl?.trim() || "";
-
-  // Prefill if needed
   useEffect(() => {
-    if (prefill) {
-      setCurrentRequest({
-        method: prefill.method,
-        url: prefill.url,
-        headers: prefill.headers || [
-          { key: "Content-Type", value: "application/json", enabled: true },
-        ],
-        body: prefill.body || "",
-      });
-      clearPrefill?.();
-    }
-  }, [prefill, setCurrentRequest, clearPrefill]);
+    if (!prefill) return;
 
-  // Save history
+    // Prefill request fields
+    setCurrentRequest({
+      method: prefill.method,
+      url: prefill.url,
+      headers:
+        prefill.headers && prefill.headers.length
+          ? prefill.headers
+          : [{ key: "Content-Type", value: "application/json", enabled: true }],
+      body: prefill.body || "",
+    });
+
+    // Prefill base URL
+    setBaseUrl(prefill.baseUrl?.trim() || globalSettings.baseUrl?.trim() || "");
+
+    // ❌ Do NOT clear prefill here anymore
+  }, [prefill, globalSettings.baseUrl]);
+
+  // Save request to history
   const saveHistory = (
     method: string,
     url: string,
@@ -121,7 +116,7 @@ const RequestForm = ({
     }
   };
 
-  // Handle Send
+  // Handle request sending
   const handleSend = async () => {
     if (!url) return alert("Enter URL");
 
@@ -151,16 +146,31 @@ const RequestForm = ({
       return acc;
     }, {} as Record<string, string>);
 
-    const auth =
-      matchingCollection?.auth?.token && matchingCollection?.auth?.key
-        ? matchingCollection.auth
-        : globalSettings.auth;
+    const collectionAuth =
+      prefill?.collectionId &&
+      collections.find((c) => c.id === prefill.collectionId)?.auth;
 
-    if (auth?.key && auth?.token) finalHeaders[auth.key] = auth.token;
+    const auth =
+      collectionAuth &&
+      typeof collectionAuth === "object" &&
+      "token" in collectionAuth &&
+      "key" in collectionAuth
+        ? collectionAuth
+        : globalSettings.auth &&
+          typeof globalSettings.auth === "object" &&
+          "token" in globalSettings.auth &&
+          "key" in globalSettings.auth
+        ? globalSettings.auth
+        : null;
+
+    if (auth && auth.key && auth.token) {
+      finalHeaders[auth.key] = auth.token;
+    }
 
     const options: RequestInit = { method, headers: finalHeaders };
     if (!["GET", "DELETE"].includes(method)) options.body = body;
 
+    // Send Request
     const sendRequest = async (url: string, options: RequestInit) => {
       let normalizedHeaders: Record<string, string> = {};
       if (options.headers instanceof Headers)
@@ -230,9 +240,13 @@ const RequestForm = ({
         raw: result.body,
         parsed,
         statusCode: result.status,
-        statusText: result.statusText,
         timeMs: end - start,
-        request: { method, url: finalUrl, headers: finalHeaders, body },
+        request: {
+          method,
+          url: finalUrl,
+          headers: finalHeaders,
+          body,
+        },
       });
 
       setStatus(result.ok ? "success" : "error");
@@ -244,17 +258,18 @@ const RequestForm = ({
         body
       );
       setShowAddToCollection(true);
+      clearPrefill?.();
     } catch (err: any) {
       setResponse({
         raw: err.message,
         parsed: { error: err.message },
         timeMs: 0,
       });
+      clearPrefill?.();
       setStatus("error");
     }
   };
 
-  // Add to collection
   const addToCollection = (collectionId: string) => {
     setCollections((prev) => {
       const updated = [...prev];
@@ -310,32 +325,7 @@ const RequestForm = ({
 
         {baseUrl && (
           <div className="baseurl-tag" data-title={baseUrl}>
-            {matchingCollections.length === 1 && "{baseURL}"}
-            {matchingCollections.length > 1 && (
-              <span
-                onClick={() => {
-                  setSelectedCollectionId((prev) => {
-                    const currentIndex = matchingCollections.findIndex(
-                      (c) => c.id === prev
-                    );
-                    const nextIndex =
-                      currentIndex === -1 ||
-                      currentIndex === matchingCollections.length - 1
-                        ? 0
-                        : currentIndex + 1;
-                    return matchingCollections[nextIndex].id;
-                  });
-                }}
-                style={{
-                  alignItems: "center",
-                  display: "flex",
-                  cursor: "pointer",
-                }}
-              >
-                {"{baseURL}"}
-                <ReplaceSVG />
-              </span>
-            )}
+            {"{baseURL}"}
           </div>
         )}
 
@@ -347,12 +337,7 @@ const RequestForm = ({
           }
         />
 
-        <button
-          onClick={handleSend}
-          style={{ marginLeft: matchingCollections.length > 1 ? "-15px" : "0" }}
-        >
-          Send
-        </button>
+        <button onClick={handleSend}>Send</button>
       </div>
 
       <HeaderTable

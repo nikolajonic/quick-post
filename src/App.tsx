@@ -137,12 +137,15 @@ const App = () => {
     setActiveTab("request");
   };
 
-  const handleSelectCollectionRequest = (req: {
-    method: string;
-    url: string;
-    headers?: { key: string; value: string; enabled: boolean }[];
-    body?: string;
-  }) => {
+  const handleSelectCollectionRequest = (
+    req: {
+      method: string;
+      url: string;
+      headers?: { key: string; value: string; enabled: boolean }[];
+      body?: string;
+    },
+    collection: Collection
+  ) => {
     setSelectedHistoryItem({
       method: req.method,
       url: req.url,
@@ -153,6 +156,8 @@ const App = () => {
       body: req.body || "",
       status: "success",
       timestamp: new Date().toISOString(),
+      baseUrl: collection.baseUrl || "",
+      collectionId: collection.id,
     });
     setActiveTab("request");
   };

@@ -34,6 +34,6 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         });
       });
 
-    return true; // keep sendResponse alive for async response
+    return true;
   }
 });

@@ -30,12 +30,15 @@ interface Props {
   addCollection: (name: string) => void;
   removeCollection: (id: string) => void;
   toggleCollapse: (id: string) => void;
-  onSelectRequest?: (req: {
-    method: string;
-    url: string;
-    headers?: { key: string; value: string; enabled: boolean }[];
-    body?: string;
-  }) => void;
+  onSelectRequest: (
+    req: {
+      method: string;
+      url: string;
+      headers?: { key: string; value: string; enabled: boolean }[];
+      body?: string;
+    },
+    collection: Collection // ✅ added
+  ) => void;
 }
 
 declare const chrome: any;
@@ -256,7 +259,7 @@ const Collections = ({
                             <li key={i} className="request-item">
                               <div
                                 className="request-main"
-                                onClick={() => onSelectRequest?.(r)}
+                                onClick={() => onSelectRequest(r, col)}
                               >
                                 <span
                                   className={`method-tag ${r.method.toLowerCase()}`}

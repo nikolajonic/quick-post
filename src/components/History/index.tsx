@@ -9,8 +9,9 @@ export interface HistoryItem {
   body: string;
   status: "success" | "error";
   timestamp: string;
+  baseUrl?: string; // ✅ added
+  collectionId?: string; // ✅ added
 }
-
 interface HistoryProps {
   history: HistoryItem[];
   onSelect: (item: HistoryItem) => void;
