@@ -34,4 +34,5 @@ export interface HistoryItem {
   timestamp: string;
   baseUrl?: string;
   collectionId?: string;
+  collectionAuth?: { key: string; token: string };
 }

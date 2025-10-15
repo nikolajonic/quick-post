@@ -1,0 +1,30 @@
+.tab-content {
+  overflow-y: auto;
+  padding: 14px;
+}
+.toolbar-header {
+  padding: 14px;
+}
+
+.tabs {
+  margin-left: 14px;
+  margin-right: 14px;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: "white";
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--primary);
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #e88b22;
+}

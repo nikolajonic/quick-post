@@ -1,35 +1,63 @@
 .header-table {
   margin-top: 16px;
+  width: 100%;
 }
 
 .header-table-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.header-table table {
+.header-table-grid {
   width: 100%;
   border-collapse: collapse;
 }
 
-.header-table th,
-.header-table td {
-  padding: 6px;
-  border-bottom: 1px solid #ddd;
+.header-table-grid th,
+.header-table-grid td {
+  padding: 6px 8px;
   font-size: 13px;
+  vertical-align: middle;
+  border-bottom: 1px solid #ddd;
 }
 
-.header-table input[type="text"],
-.header-table input[type="checkbox"] {
+.header-table-grid td:first-child {
+  width: 36px;
+  text-align: center;
+}
+
+.header-table-grid td:nth-child(2) {
+  width: 33%;
+  padding-right: 8px;
+}
+
+.header-table-grid td:nth-child(3) {
+  width: 54%;
+  padding-right: 8px;
+}
+
+.header-table-grid td:last-child {
+  width: 36px;
+  text-align: center;
+  padding-right: 0; /* ✅ keeps the X close to the input */
+}
+
+.header-table-grid input[type="text"] {
   width: 100%;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  padding: 6px 8px;
+  font-size: 13px;
+  box-sizing: border-box;
 }
 
-.header-table input[type="text"] {
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  padding: 5px;
+.header-table-grid input[type="checkbox"] {
+  transform: scale(1.1);
+  cursor: pointer;
+  margin: 0 auto;
+  display: block;
 }
 
 .remove-btn {
@@ -38,8 +66,14 @@
   color: #999;
   font-size: 18px;
   cursor: pointer;
+  transition: color 0.2s, transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 20px;
 }
 
 .remove-btn:hover {
   color: #e74c3c;
+  transform: scale(1.2);
 }

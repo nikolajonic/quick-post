@@ -253,7 +253,25 @@ const Collections = ({
                             <li key={i} className="request-item">
                               <div
                                 className="request-main"
-                                onClick={() => onSelectRequest(r, col)}
+                                onClick={() => {
+                                  let updatedRequest = { ...r };
+
+                                  updatedRequest.headers = Array.isArray(
+                                    updatedRequest.headers
+                                  )
+                                    ? [...updatedRequest.headers]
+                                    : [];
+
+                                  if (col.auth?.key && col.auth?.token) {
+                                    updatedRequest.headers.push({
+                                      key: col.auth.key,
+                                      value: col.auth.token,
+                                      enabled: true,
+                                    });
+                                  }
+
+                                  onSelectRequest(updatedRequest, col);
+                                }}
                               >
                                 <span
                                   className={`method-tag ${r.method.toLowerCase()}`}

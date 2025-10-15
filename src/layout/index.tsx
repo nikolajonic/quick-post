@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import RequestForm from "../components/RequestForm";
 import Collections from "../components/Collections";
 import History from "../components/History";
@@ -10,6 +10,7 @@ import HistorySVG from "../components/svgs/history";
 import SettingsSVG from "../components/svgs/settings";
 
 import logo from "../assets/icon128.png";
+import "./index.css";
 
 import "../styles/base.css";
 
@@ -22,10 +23,17 @@ const Layout = () => {
   const [selectedHistoryItem, setSelectedHistoryItem] = useState<any>(null);
   const [baseUrl, setBaseUrl] = useState("");
 
-  // ✅ Get data from contexts only
   const { addCollection, removeCollection, toggleCollapse } = useCollections();
   const { globalSettings, setGlobalSettings } = useGlobalSettings();
   const { setCurrent } = useCurrentCollection();
+
+  useEffect(() => {
+    console.log("Global settings changed:", globalSettings);
+
+    if (globalSettings.baseUrl !== "") {
+      setBaseUrl(globalSettings.baseUrl);
+    }
+  }, [globalSettings]);
 
   const handleSelectHistoryItem = (item: any) => {
     setSelectedHistoryItem(item);
@@ -35,6 +43,7 @@ const Layout = () => {
 
   const handleSelectCollectionRequest = (req: any, collection: any) => {
     setCurrent(collection);
+
     setSelectedHistoryItem({
       method: req.method,
       url: req.url,
@@ -46,6 +55,7 @@ const Layout = () => {
       timestamp: new Date().toISOString(),
       baseUrl: collection.baseUrl ?? "",
       collectionId: collection.id,
+      collectionAuth: collection.auth ?? null,
     });
     setActiveTab("request");
   };

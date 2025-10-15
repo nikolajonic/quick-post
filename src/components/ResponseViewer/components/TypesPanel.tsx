@@ -5,23 +5,30 @@ interface TypesPanelProps {
   visible: boolean;
   onClose: () => void;
   data: any;
+  ignoreRef?: React.RefObject<HTMLElement | null>;
 }
 
-const TypesPanel = ({ visible, onClose, data }: TypesPanelProps) => {
+const TypesPanel = ({ visible, onClose, data, ignoreRef }: TypesPanelProps) => {
   const panelRef = useRef<HTMLDivElement>(null);
 
-  // ✅ Click outside to close
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
-        onClose();
+      const target = e.target as Node;
+
+      if (
+        panelRef.current?.contains(target) ||
+        ignoreRef?.current?.contains(target)
+      ) {
+        return;
       }
+
+      onClose();
     };
+
     if (visible) document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [visible, onClose]);
+  }, [visible, onClose, ignoreRef]);
 
-  // ✅ Swipe down to close (mobile)
   useEffect(() => {
     let startY = 0;
     const panel = panelRef.current;
@@ -45,51 +52,52 @@ const TypesPanel = ({ visible, onClose, data }: TypesPanelProps) => {
     };
   }, [visible, onClose]);
 
+  if (!visible) return null;
+
   return (
-    <>
-      {visible && (
-        <div
-          ref={panelRef}
-          style={{
-            position: "absolute",
-            bottom: visible ? "0" : "-50%",
-            left: 0,
-            right: 0,
-            height: "45%",
-            background: "#1e1e1e",
-            color: "#e6e6e6",
-            overflow: "auto",
-            borderTop: "2px solid #007bff",
-            borderTopLeftRadius: "6px",
-            borderTopRightRadius: "6px",
-            padding: "10px 14px",
-            boxShadow: "0 -2px 10px rgba(0,0,0,0.25)",
-            zIndex: 20,
-            transition: "bottom 0.20s ease,transform 0.15s ease",
-          }}
-        >
-          <div
-            style={{
-              fontWeight: 600,
-              marginBottom: "8px",
-              color: "#66b2ff",
-              fontSize: "13px",
-            }}
-          >
-            Generated Types
-          </div>
-          <pre
-            style={{
-              whiteSpace: "pre-wrap",
-              fontFamily: "Consolas, monospace",
-              fontSize: "13px",
-              lineHeight: "1.5",
-            }}
-            dangerouslySetInnerHTML={{ __html: generateTypesFromJson(data) }}
-          />
-        </div>
-      )}
-    </>
+    <div
+      ref={panelRef}
+      style={{
+        position: "absolute",
+        bottom: 0,
+        left: 0,
+        right: 0,
+        height: "45%",
+        background: "#1e1e1e",
+        color: "#e6e6e6",
+        overflow: "auto",
+        borderTop: "2px solid #007bff",
+        borderTopLeftRadius: "6px",
+        borderTopRightRadius: "6px",
+        padding: "10px 14px",
+        boxShadow: "0 -2px 10px rgba(0,0,0,0.25)",
+        zIndex: 20,
+        transition: "transform 0.25s ease, opacity 0.25s ease",
+        transform: visible ? "translateY(0)" : "translateY(100%)",
+        opacity: visible ? 1 : 0,
+      }}
+    >
+      <div
+        style={{
+          fontWeight: 600,
+          marginBottom: "8px",
+          color: "#66b2ff",
+          fontSize: "13px",
+        }}
+      >
+        Generated Types
+      </div>
+
+      <pre
+        style={{
+          whiteSpace: "pre-wrap",
+          fontFamily: "Consolas, monospace",
+          fontSize: "13px",
+          lineHeight: "1.5",
+        }}
+        dangerouslySetInnerHTML={{ __html: generateTypesFromJson(data) }}
+      />
+    </div>
   );
 };
 

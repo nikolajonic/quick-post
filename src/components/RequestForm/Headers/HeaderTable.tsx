@@ -30,7 +30,7 @@ const HeaderTable: FC<HeaderTableProps> = ({ headers, setHeaders }) => {
         <h4>Headers</h4>
         <button onClick={addRow}>+ Add Header</button>
       </div>
-      <table>
+      <table className="header-table-grid">
         <thead>
           <tr>
             <th></th>

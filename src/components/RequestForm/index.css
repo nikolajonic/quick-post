@@ -1,6 +1,5 @@
 @import "../../styles/variables.css";
 
-/* 🟦 Request Row (method + URL + button) */
 .row {
   display: flex;
   align-items: center;
@@ -9,20 +8,18 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: white;
-  padding: 6px 0; /* vertical padding only */
+  padding: 6px 0;
   box-sizing: border-box;
   position: relative;
 }
 
-/* ➕ invisible spacer keeps right padding consistent */
 .row::after {
   content: "";
   display: block;
-  width: 10px; /* adds clean space on the right */
+  width: 10px;
   flex-shrink: 0;
 }
 
-/* 🟧 Method dropdown */
 .row select {
   margin-left: 10px;
   appearance: none;
@@ -42,7 +39,6 @@
   flex-shrink: 0;
 }
 
-/* 🟨 URL input */
 .row input {
   flex: 1 1 auto;
   border: none;
@@ -52,7 +48,6 @@
   min-width: 100px;
 }
 
-/* 🟩 Send button */
 .row .send-btn {
   flex-shrink: 0;
   background: var(--button-bg);
@@ -68,7 +63,13 @@
   background: #1b1b1b;
 }
 
-/* 🟪 BaseURL Tag */
+.row .send-btn:disabled {
+  background: #999;
+  color: #ddd;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
 .baseurl-tag {
   background: rgba(96, 172, 253, 0.08);
   border: 1px solid rgba(0, 123, 255, 0.4);
@@ -91,7 +92,6 @@
   border-color: #007bff;
 }
 
-/* Tooltip showing full baseURL on hover */
 .baseurl-tag[data-title]:hover::after {
   content: attr(data-title);
   position: absolute;
@@ -107,7 +107,6 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
-/* 🟧 Add to Collection */
 .add-to-collection {
   display: flex;
   align-items: center;
@@ -140,7 +139,6 @@
   background: #fff2e2;
 }
 
-/* 🟫 Tooltips */
 .tooltip-success {
   margin-top: 8px;
   background: var(--success);
@@ -161,7 +159,6 @@
   animation: fadeInOut 2.5s ease-in-out forwards;
 }
 
-/* 🔄 Fade animation */
 @keyframes fadeInOut {
   0% {
     opacity: 0;

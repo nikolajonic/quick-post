@@ -8,9 +8,6 @@
   white-space: pre-wrap;
   overflow-x: auto;
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
-
-  max-height: 260px;
-  overflow-y: auto;
 }
 
 .response pre {
@@ -65,4 +62,44 @@
 
 .response-header select:focus {
   box-shadow: 0 0 0 2px rgba(194, 110, 14, 0.2);
+}
+
+.request {
+  margin-top: 16px;
+  background: #1e1e1e;
+  color: #eaeaea;
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  white-space: pre-wrap;
+  overflow-x: auto;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.15);
+}
+
+.request-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.request-header select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+
+  background-color: var(--response-bg);
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 13px;
+  padding: 6px 28px 6px 10px;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.2s ease;
+  background-image: url("data:image/svg+xml;utf8,<svg fill='%23c26e0e' height='16' viewBox='0 0 24 24' width='16' xmlns='http://www.w3.org/2000/svg'><path d='M7 10l5 5 5-5z'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 14px;
 }

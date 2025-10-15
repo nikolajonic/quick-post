@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
+import { isExtension } from "../../helpers";
 
 interface GlobalSettings {
   baseUrl: string;
@@ -14,6 +15,8 @@ const GlobalSettingsContext = createContext<
   GlobalSettingsContextType | undefined
 >(undefined);
 
+declare const chrome: any;
+
 export const GlobalSettingsProvider = ({
   children,
 }: {
@@ -23,15 +26,30 @@ export const GlobalSettingsProvider = ({
     baseUrl: "",
     auth: { key: "", token: "" },
   });
+  const [loaded, setLoaded] = useState(false);
 
   useEffect(() => {
-    const saved = localStorage.getItem("globalSettings");
-    if (saved) setGlobalSettings(JSON.parse(saved));
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.get("globalSettings", (res: any) => {
+        if (res.globalSettings) setGlobalSettings(res.globalSettings);
+        setLoaded(true);
+      });
+    } else {
+      const saved = localStorage.getItem("globalSettings");
+      if (saved) setGlobalSettings(JSON.parse(saved));
+      setLoaded(true);
+    }
   }, []);
 
   useEffect(() => {
-    localStorage.setItem("globalSettings", JSON.stringify(globalSettings));
-  }, [globalSettings]);
+    if (!loaded) return;
+
+    if (isExtension && chrome?.storage?.local) {
+      chrome.storage.local.set({ globalSettings });
+    } else {
+      localStorage.setItem("globalSettings", JSON.stringify(globalSettings));
+    }
+  }, [globalSettings, loaded]);
 
   return (
     <GlobalSettingsContext.Provider

@@ -42,3 +42,11 @@
   padding: 16px 20px;
   max-width: 600px;
 }
+
+.card {
+  background: #fffaf4;
+  border: 1px solid #e8a354;
+  border-radius: 8px;
+  padding: 16px 20px;
+  max-width: 600px;
+}

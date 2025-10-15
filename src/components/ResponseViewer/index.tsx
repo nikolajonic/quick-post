@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import "./index.css";
 import { isJsonString } from "../../helpers";
 import TypesPanel from "./components/TypesPanel";
@@ -24,6 +24,7 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
   const [tab, setTab] = useState<"response" | "request">("response");
   const [view, setView] = useState<"pretty" | "raw">("pretty");
   const [showTypes, setShowTypes] = useState(false);
+  const buttonRef = useRef<HTMLButtonElement>(null);
 
   if (!data) return null;
 
@@ -33,11 +34,6 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
       ? JSON.stringify(data.parsed, null, 2)
       : data.parsed;
   const displayResponse = view === "pretty" ? prettyResponse : data.raw;
-
-  const prettyRequestBody =
-    data.request?.body && isJsonString(data.request.body)
-      ? JSON.stringify(JSON.parse(data.request.body), null, 2)
-      : data.request?.body;
 
   const canShowTypes =
     status === "success" &&
@@ -50,7 +46,7 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
       className={className}
       style={{
         position: "relative",
-        overflow: "hidden", // prevent parent scroll
+        overflow: "hidden",
       }}
     >
       {/* Tabs */}
@@ -144,15 +140,14 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
             {displayResponse}
           </pre>
 
-          {/* Floating button and panel — OUTSIDE scroll area */}
           {canShowTypes && (
             <>
               <button
+                ref={buttonRef}
                 style={{
                   position: "absolute",
                   right: "10px",
-                  bottom: showTypes ? "60%" : "00px",
-                  transform: showTypes ? "translateY(100%)" : "none",
+                  bottom: "0px",
                   background: "#007bff",
                   color: "#fff",
                   border: "none",
@@ -166,35 +161,30 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
                   boxShadow: "0 0 4px rgba(0,0,0,0.25)",
                   zIndex: 999,
                   opacity: 1,
-                  transition: "bottom 0.25s ease, transform 0.20s ease",
+                  transition: "background 0.25s ease",
                 }}
-                onClick={() => setShowTypes(!showTypes)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowTypes((prev) => !prev);
+                }}
               >
-                TYPES
+                {showTypes ? "CLOSE" : "TYPES"}
               </button>
 
               <TypesPanel
                 visible={showTypes}
                 onClose={() => setShowTypes(false)}
                 data={data.parsed}
+                ignoreRef={buttonRef}
               />
             </>
           )}
         </>
       )}
 
-      {/* --- REQUEST TAB --- */}
       {tab === "request" && data.request && (
         <>
-          <div
-            className="response-header"
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              marginBottom: "6px",
-            }}
-          >
+          <div className="request-header">
             <div
               style={{
                 display: "flex",
@@ -239,18 +229,28 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
               <option value="raw">Raw</option>
             </select>
           </div>
-
-          <div style={{ marginBottom: "6px" }}>
-            <span style={{ fontSize: "12px", color: "#aaa" }}>Headers:</span>
-            <pre>{JSON.stringify(data.request.headers || {}, null, 2)}</pre>
+          <div className="request">
+            <pre
+              style={{
+                overflowY: "auto",
+                margin: 0,
+                paddingRight: "8px",
+              }}
+            >
+              {JSON.stringify(
+                {
+                  headers: data.request.headers || {},
+                  body: data.request.body
+                    ? isJsonString(data.request.body)
+                      ? JSON.parse(data.request.body)
+                      : data.request.body
+                    : null,
+                },
+                null,
+                2
+              )}
+            </pre>
           </div>
-
-          {data.request.body && (
-            <div>
-              <span style={{ fontSize: "12px", color: "#aaa" }}>Body:</span>
-              <pre>{prettyRequestBody}</pre>
-            </div>
-          )}
         </>
       )}
     </div>

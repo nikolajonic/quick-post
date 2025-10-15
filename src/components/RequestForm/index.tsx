@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import ResponseViewer from "../ResponseViewer";
 import HeaderTable from "./Headers/HeaderTable";
 import BodyInput from "./BodyInput";
@@ -44,27 +44,51 @@ const RequestForm = ({
   const [showAddToCollection, setShowAddToCollection] = useState(false);
   const [showTooltip, setShowTooltip] = useState<string | null>(null);
 
-  // ✅ Prefill request from history
+  // 🧠 Keep prefill + collection info stable
+  const prefillRef = useRef(prefill);
+  const fromCollectionRef = useRef(false);
+
+  useEffect(() => {
+    prefillRef.current = prefill;
+  }, [prefill]);
+
   useEffect(() => {
     if (!prefill) return;
     const { currentRequest: filledReq, baseUrl: filledBase } = prefillRequest(
       prefill,
       globalSettings.baseUrl || ""
     );
+
     setCurrentRequest(filledReq);
     setBaseUrl(filledBase);
+
+    // 🟢 Persist "fromCollection" across rerenders
+    fromCollectionRef.current = !!prefill.collectionId;
   }, [prefill, globalSettings.baseUrl, setBaseUrl, setCurrentRequest]);
 
-  // ✅ Send API request
   const handleSend = async () => {
-    if (!url.trim()) return alert("Enter URL");
+    let updatedHeaders = [...headers];
+
+    const fromCollection = fromCollectionRef.current;
+
+    console.log("fromCollection:", fromCollection);
+
+    if (!fromCollection) {
+      updatedHeaders.push({
+        key: globalSettings.auth.key,
+        value: globalSettings.auth.token,
+        enabled: true,
+      });
+    }
+
+    updatedHeaders = updatedHeaders.filter((h) => h.enabled === true);
 
     try {
       const result = await sendRequest(
         baseUrl || globalSettings.baseUrl || "",
         url,
         method,
-        headers,
+        updatedHeaders,
         body
       );
 
@@ -74,7 +98,7 @@ const RequestForm = ({
       saveToHistory(history, setHistory, {
         method,
         url: result.request.url,
-        headers,
+        headers: updatedHeaders,
         body,
         status: result.ok ? "success" : "error",
       });
@@ -92,9 +116,17 @@ const RequestForm = ({
     }
   };
 
+  const handleDetachBaseUrl = () => {
+    fromCollectionRef.current = false;
+    if (globalSettings.baseUrl !== undefined) {
+      setBaseUrl(globalSettings.baseUrl);
+    } else {
+      setBaseUrl("");
+    }
+  };
+
   return (
     <div>
-      {/* 🟦 Method + URL bar */}
       <div className="row">
         <select
           value={method}
@@ -124,33 +156,28 @@ const RequestForm = ({
               fontSize: "12px",
             }}
           >
-            <span>{"{baseURL}"}</span>
-            <button
-              style={{
-                background: "transparent",
-                border: "none",
-                color: "#eb8181ff",
-                fontWeight: 700,
-                cursor: "pointer",
-                fontSize: "14px",
-                padding: 0,
-              }}
-              title="Detach baseURL"
-              onClick={() => {
-                const finalUrl =
-                  url.startsWith("http") || url.startsWith("/")
-                    ? url
-                    : `${baseUrl.replace(/\/$/, "")}/${url.replace(/^\//, "")}`;
-
-                setCurrentRequest((prev) => ({
-                  ...prev,
-                  url: finalUrl,
-                }));
-                setBaseUrl("");
-              }}
-            >
-              ×
-            </button>
+            <span>
+              {baseUrl === globalSettings.baseUrl
+                ? "G {baseURL}"
+                : "C {baseURL}"}
+            </span>
+            {baseUrl !== globalSettings.baseUrl && (
+              <button
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  color: "#eb8181ff",
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  fontSize: "14px",
+                  padding: 0,
+                }}
+                title="Detach baseURL"
+                onClick={handleDetachBaseUrl}
+              >
+                x
+              </button>
+            )}
           </div>
         )}
 
@@ -162,12 +189,15 @@ const RequestForm = ({
           }
         />
 
-        <button className="send-btn" onClick={handleSend}>
+        <button
+          disabled={!url.trim()}
+          className="send-btn"
+          onClick={handleSend}
+        >
           Send
         </button>
       </div>
 
-      {/* 🟩 Headers Table */}
       <HeaderTable
         headers={headers}
         setHeaders={(newHeaders) =>
@@ -181,7 +211,6 @@ const RequestForm = ({
         }
       />
 
-      {/* 🟨 Request Body */}
       <BodyInput
         method={method}
         body={body}
@@ -193,10 +222,8 @@ const RequestForm = ({
         }
       />
 
-      {/* 🟪 Response Viewer */}
       <ResponseViewer data={response} status={status} />
 
-      {/* 🟧 Add to Collection */}
       {showAddToCollection && collections.length > 0 && (
         <div className="add-to-collection">
           <span>Add to collection:</span>
@@ -227,7 +254,6 @@ const RequestForm = ({
         </div>
       )}
 
-      {/* 🟫 Tooltip */}
       {showTooltip && (
         <div
           className={
