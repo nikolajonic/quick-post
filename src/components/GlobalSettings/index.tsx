@@ -166,7 +166,7 @@ const GlobalSettings: FC<GlobalSettingsProps> = ({
           <button
             onClick={handleSave}
             style={{
-              background: "#c26e0e",
+              background: "var(--primary)",
               color: "white",
               border: "none",
               borderRadius: 6,

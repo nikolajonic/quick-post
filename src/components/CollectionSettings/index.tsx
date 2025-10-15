@@ -32,8 +32,8 @@ const CollectionSettings = ({ id, baseUrl = "", auth, onSave }: Props) => {
   return (
     <div
       style={{
-        background: "#fffaf4",
-        border: "1px solid #e8a354",
+        background: "var(--primary-lightest)",
+        border: "1px solid var(--primary-light)",
         borderRadius: 8,
         padding: "10px 12px",
         marginTop: 8,
@@ -107,7 +107,7 @@ const CollectionSettings = ({ id, baseUrl = "", auth, onSave }: Props) => {
             onSave(id, { baseUrl: url, auth: { key: authKey, token } })
           }
           style={{
-            background: "#c26e0e",
+            background: "var(--primary)",
             color: "white",
             border: "none",
             borderRadius: 6,

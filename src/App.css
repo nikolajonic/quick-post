@@ -1,6 +1,7 @@
 :root {
   --primary: #c26e0e;
   --primary-light: #e8a354;
+  --primary-lightest: #fffaf4;
   --secondary: #ababab;
   --button-bg: #2b2b2b;
   --button-text: #ffffff;
@@ -160,6 +161,7 @@ h2 {
   flex-direction: column;
   justify-content: flex-start;
   width: 500px;
-  max-height: 80vh; /* 👈 Prevent overflow */
-  overflow: hidden;
+
+  box-sizing: border-box;
+  margin: 0 auto;
 }

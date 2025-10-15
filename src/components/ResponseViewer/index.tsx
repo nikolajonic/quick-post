@@ -103,7 +103,7 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
               {data.statusCode && (
                 <span
                   style={{
-                    color: "#c26e0e",
+                    color: "var(primary)",
                     fontSize: "13px",
                     fontWeight: 600,
                   }}
@@ -195,7 +195,7 @@ const ResponseViewer = ({ data, status }: ResponseViewerProps) => {
             >
               <span
                 style={{
-                  color: "#c26e0e",
+                  color: "var(--primary)",
                   fontWeight: 600,
                   fontSize: "13px",
                   flexShrink: 0,

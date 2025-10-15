@@ -4,7 +4,7 @@ const MoreSVG = () => (
     width="18"
     height="18"
     fill="none"
-    stroke="#c26e0e"
+    stroke="var(--primary)"
     strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"

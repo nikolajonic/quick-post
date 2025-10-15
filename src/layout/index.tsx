@@ -28,8 +28,6 @@ const Layout = () => {
   const { setCurrent } = useCurrentCollection();
 
   useEffect(() => {
-    console.log("Global settings changed:", globalSettings);
-
     if (globalSettings.baseUrl !== "") {
       setBaseUrl(globalSettings.baseUrl);
     }
